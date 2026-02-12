@@ -263,7 +263,7 @@ export const EstimatePDFDocument: React.FC<EstimatePDFProps> = ({
                     창업이라는 긴 여정, 오프닝이 가장 든든한 페이스메이커가 되어 드릴게요.
                 </Text>
                 <Text style={styles.costRange}>
-                    {formatCurrency(totalCostRange.min)} ~ {formatCurrency(totalCostRange.max)}원
+                    {formatCurrency(totalCostRange.min)} ~ {formatCurrency(totalCostRange.max)}
                 </Text>
                 <Text style={styles.costLabel}>ESTIMATED TOTAL COST RANGE</Text>
             </View>
@@ -285,16 +285,16 @@ export const EstimatePDFDocument: React.FC<EstimatePDFProps> = ({
 
             <View style={styles.footer}>
                 <Text style={styles.footerText}>OPENING STARTUP SOLUTION</Text>
-                <Text style={styles.footerText}>Page 1 / 3</Text>
+                <Text style={styles.footerText}>Page 1 / 2</Text>
             </View>
         </Page>
 
-        {/* PAGE 2: Cost Breakdown */}
-        <Page size="A4" style={styles.pageDetails}>
+        {/* PAGE 2: Details & Checklist */}
+        <Page size="A4" style={styles.pageChecklist}>
             <Text style={styles.serifTitle}>Details.</Text>
 
             {/* Cost Breakdown */}
-            <View style={{ marginBottom: 40 }}>
+            <View style={{ marginBottom: 20 }}>
                 <Text style={styles.sectionTitle}>Cost Breakdown</Text>
                 {costBreakdown.map((item, idx) => (
                     <View key={idx} style={styles.tableRow}>
@@ -312,18 +312,8 @@ export const EstimatePDFDocument: React.FC<EstimatePDFProps> = ({
                 </View>
             </View>
 
-            <View style={styles.footer}>
-                <Text style={styles.footerText}>OPENING STARTUP SOLUTION</Text>
-                <Text style={styles.footerText}>Page 2 / 3</Text>
-            </View>
-        </Page>
-
-        {/* PAGE 3: Checklist & Action Plan */}
-        <Page size="A4" style={styles.pageChecklist}>
-            <Text style={styles.serifTitle}>Checklist.</Text>
-
             {/* Checklist Status */}
-            <View style={{ marginBottom: 40, flex: 1 }}>
+            <View style={{ marginBottom: 20, flex: 1 }}>
                 <Text style={styles.sectionTitle}>Preparation Status</Text>
                 <View style={styles.checklistContainer}>
                     {/* Help Needed Column */}
@@ -376,7 +366,7 @@ export const EstimatePDFDocument: React.FC<EstimatePDFProps> = ({
 
             <View style={styles.footer}>
                 <Text style={styles.footerText}>OPENING STARTUP SOLUTION</Text>
-                <Text style={styles.footerText}>Page 3 / 3</Text>
+                <Text style={styles.footerText}>Page 2 / 2</Text>
             </View>
         </Page>
     </Document>
