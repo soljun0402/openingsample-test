@@ -6,19 +6,19 @@ Font.register({
     family: 'Noto Sans KR',
     fonts: [
         {
-            src: '/fonts/NotoSansKR-Light.ttf', // Light 300
+            src: '/fonts/NotoSansKR-Light.ttf',
             fontWeight: 'light',
         },
         {
-            src: '/fonts/NotoSansKR-Regular.ttf', // Regular 400
+            src: '/fonts/NotoSansKR-Regular.ttf',
             fontWeight: 'normal',
         },
         {
-            src: '/fonts/NotoSansKR-Medium.ttf', // Medium 500
+            src: '/fonts/NotoSansKR-Medium.ttf',
             fontWeight: 'medium',
         },
         {
-            src: '/fonts/NotoSansKR-Bold.ttf', // Bold 700
+            src: '/fonts/NotoSansKR-Bold.ttf',
             fontWeight: 'bold',
         },
     ],
@@ -334,7 +334,7 @@ export const EstimatePDFDocument: React.FC<EstimatePDFProps> = ({
                 </Text>
                 <Text style={styles.ctaText}>
                     {checklist.worryCount > 0
-                        ? `${checklist.worryCount}개의 '도움 필요' 항목에 대해 오프닝 전담 매니저가 구체적인 해결책과 비용 절감 방안을 준비했습니다. 내일 오전 중으로 연락드리겠습니다.`
+                        ? `${checklist.worryCount}개의 '도움 필요' 항목에 대해 오프닝 전담 매니저가 구체적인 해결책과 비용 절감 방안을 준비했습니다.내일 오전 중으로 연락드리겠습니다.`
                         : "대부분의 준비가 완료되셨군요! 놓친 부분이 없는지 전담 매니저가 더블 체크를 도와드리겠습니다."}
                 </Text>
             </View>
