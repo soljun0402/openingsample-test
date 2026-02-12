@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
     costRange: {
         fontFamily: 'Noto Sans KR',
         fontWeight: 'bold',
-        fontSize: 48,
+        fontSize: 32,
         color: '#1E6FFF',
         marginBottom: 5,
     },
@@ -207,6 +207,13 @@ export interface EstimatePDFProps {
 
 // Helper
 const formatCurrency = (amount: number) => {
+    if (amount >= 100000000) {
+        const uk = Math.floor(amount / 100000000);
+        const remainder = Math.floor((amount % 100000000) / 10000);
+        return remainder > 0
+            ? `${uk}억 ${new Intl.NumberFormat('ko-KR').format(remainder)}만`
+            : `${uk}억`;
+    }
     return new Intl.NumberFormat('ko-KR').format(amount / 10000) + '만';
 };
 
@@ -230,7 +237,7 @@ export const EstimatePDFDocument: React.FC<EstimatePDFProps> = ({
             {/* Hero Section */}
             <View style={styles.heroSection}>
                 <Text style={styles.heroQuote}>
-                    "막막한 준비 과정,"\n"저희가 가장 든든한 답이 되어드리겠습니다."
+                    창업이라는 긴 여정, 오프닝이 가장 든든한 페이스메이커가 되어 드릴게요.
                 </Text>
                 <Text style={styles.costRange}>
                     {formatCurrency(totalCostRange.min)} ~ {formatCurrency(totalCostRange.max)}원
@@ -255,11 +262,11 @@ export const EstimatePDFDocument: React.FC<EstimatePDFProps> = ({
 
             <View style={styles.footer}>
                 <Text style={styles.footerText}>OPENING STARTUP SOLUTION</Text>
-                <Text style={styles.footerText}>Page 1 / 2</Text>
+                <Text style={styles.footerText}>Page 1 / 3</Text>
             </View>
         </Page>
 
-        {/* PAGE 2: Details & Checklist */}
+        {/* PAGE 2: Cost Breakdown */}
         <Page size="A4" style={styles.page}>
             <Text style={styles.serifTitle}>Details.</Text>
 
@@ -282,8 +289,18 @@ export const EstimatePDFDocument: React.FC<EstimatePDFProps> = ({
                 </View>
             </View>
 
+            <View style={styles.footer}>
+                <Text style={styles.footerText}>OPENING STARTUP SOLUTION</Text>
+                <Text style={styles.footerText}>Page 2 / 3</Text>
+            </View>
+        </Page>
+
+        {/* PAGE 3: Checklist & Action Plan */}
+        <Page size="A4" style={styles.page}>
+            <Text style={styles.serifTitle}>Checklist.</Text>
+
             {/* Checklist Status */}
-            <View style={{ marginBottom: 40 }}>
+            <View style={{ marginBottom: 40, flex: 1 }}>
                 <Text style={styles.sectionTitle}>Preparation Status</Text>
                 <View style={styles.checklistContainer}>
                     {/* Help Needed Column */}
@@ -307,17 +324,12 @@ export const EstimatePDFDocument: React.FC<EstimatePDFProps> = ({
                         <Text style={{ fontSize: 12, fontFamily: 'Noto Sans KR', fontWeight: 'bold', marginBottom: 10, color: '#34C759' }}>
                             Ready ({checklist.readyCount})
                         </Text>
-                        {checklist.readyItems.slice(0, 10).map((item, idx) => ( // Show only top 10 to fit page
+                        {checklist.readyItems.map((item, idx) => (
                             <View key={idx} style={styles.checkItem}>
                                 <View style={[styles.checkIcon, { backgroundColor: '#34C759' }]} />
                                 <Text style={styles.checkText}>{item}</Text>
                             </View>
                         ))}
-                        {checklist.readyCount > 10 && (
-                            <Text style={{ fontSize: 11, color: '#999', marginLeft: 20 }}>
-                                + {checklist.readyCount - 10} more items...
-                            </Text>
-                        )}
                         {checklist.readyCount === 0 && (
                             <Text style={{ fontSize: 11, color: '#999' }}>- None -</Text>
                         )}
@@ -334,14 +346,14 @@ export const EstimatePDFDocument: React.FC<EstimatePDFProps> = ({
                 </Text>
                 <Text style={styles.ctaText}>
                     {checklist.worryCount > 0
-                        ? `${checklist.worryCount}개의 '도움 필요' 항목에 대해 오프닝 전담 매니저가 구체적인 해결책과 비용 절감 방안을 준비했습니다.내일 오전 중으로 연락드리겠습니다.`
+                        ? `${checklist.worryCount}개의 '도움 필요' 항목에 대해 오프닝 전담 매니저가 구체적인 해결책과 비용 절감 방안을 준비했습니다. 내일 오전 중으로 연락드리겠습니다.`
                         : "대부분의 준비가 완료되셨군요! 놓친 부분이 없는지 전담 매니저가 더블 체크를 도와드리겠습니다."}
                 </Text>
             </View>
 
             <View style={styles.footer}>
                 <Text style={styles.footerText}>OPENING STARTUP SOLUTION</Text>
-                <Text style={styles.footerText}>Page 2 / 2</Text>
+                <Text style={styles.footerText}>Page 3 / 3</Text>
             </View>
         </Page>
     </Document>
