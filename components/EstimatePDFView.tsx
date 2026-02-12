@@ -6,19 +6,19 @@ Font.register({
     family: 'Noto Sans KR',
     fonts: [
         {
-            src: 'https://fonts.gstatic.com/s/notosanskr/v27/PbykFmXiEBPT4ITbgNA5Cgm203TpHt2u.ttf', // Light 300
+            src: '/fonts/NotoSansKR-Light.ttf', // Light 300
             fontWeight: 'light',
         },
         {
-            src: 'https://fonts.gstatic.com/s/notosanskr/v27/PbykFmXiEBPT4ITbgNA5Cgm207zlHt2u.ttf', // Regular 400
+            src: '/fonts/NotoSansKR-Regular.ttf', // Regular 400
             fontWeight: 'normal',
         },
         {
-            src: 'https://fonts.gstatic.com/s/notosanskr/v27/PbykFmXiEBPT4ITbgNA5Cgm209HlHt2u.ttf', // Medium 500
+            src: '/fonts/NotoSansKR-Medium.ttf', // Medium 500
             fontWeight: 'medium',
         },
         {
-            src: 'https://fonts.gstatic.com/s/notosanskr/v27/PbykFmXiEBPT4ITbgNA5Cgm20bzpHt2u.ttf', // Bold 700
+            src: '/fonts/NotoSansKR-Bold.ttf', // Bold 700
             fontWeight: 'bold',
         },
     ],
