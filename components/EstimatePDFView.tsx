@@ -28,7 +28,18 @@ Font.register({
 const styles = StyleSheet.create({
     page: {
         padding: 40,
-        paddingBottom: 120, // Increased margin for footer
+        backgroundColor: '#FFFFFF',
+        fontFamily: 'Noto Sans KR',
+    },
+    pageDetails: {
+        padding: 40,
+        paddingBottom: 60,
+        backgroundColor: '#FFFFFF',
+        fontFamily: 'Noto Sans KR',
+    },
+    pageChecklist: {
+        padding: 40,
+        paddingBottom: 150, // More space for CTA overlap
         backgroundColor: '#FFFFFF',
         fontFamily: 'Noto Sans KR',
     },
@@ -44,7 +55,7 @@ const styles = StyleSheet.create({
         fontFamily: 'Noto Sans KR',
         fontSize: 14,
         fontWeight: 'bold',
-        marginBottom: 15,
+        marginBottom: 10,
         textTransform: 'uppercase',
         letterSpacing: 1.5,
         borderBottomWidth: 1,
@@ -105,7 +116,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         borderBottomWidth: 1,
         borderBottomColor: '#EEEEEE',
-        paddingVertical: 12,
+        paddingVertical: 8,
         alignItems: 'center',
     },
     tableLabel: {
@@ -279,7 +290,7 @@ export const EstimatePDFDocument: React.FC<EstimatePDFProps> = ({
         </Page>
 
         {/* PAGE 2: Cost Breakdown */}
-        <Page size="A4" style={styles.page}>
+        <Page size="A4" style={styles.pageDetails}>
             <Text style={styles.serifTitle}>Details.</Text>
 
             {/* Cost Breakdown */}
@@ -289,14 +300,14 @@ export const EstimatePDFDocument: React.FC<EstimatePDFProps> = ({
                     <View key={idx} style={styles.tableRow}>
                         <Text style={styles.tableLabel}>{item.label}</Text>
                         <Text style={styles.tableValue}>
-                            {formatCurrency(item.min)} ~ {formatCurrency(item.max)}원
+                            {formatCurrency(item.min)} ~ {formatCurrency(item.max)}
                         </Text>
                     </View>
                 ))}
                 <View style={[styles.tableRow, { borderBottomWidth: 0, marginTop: 10 }]}>
                     <Text style={[styles.tableLabel, { fontFamily: 'Noto Sans KR', fontWeight: 'bold' }]}>Total</Text>
                     <Text style={[styles.tableValue, { color: '#1E6FFF', fontSize: 14 }]}>
-                        {formatCurrency(totalCostRange.min)} ~ {formatCurrency(totalCostRange.max)}원
+                        {formatCurrency(totalCostRange.min)} ~ {formatCurrency(totalCostRange.max)}
                     </Text>
                 </View>
             </View>
@@ -308,7 +319,7 @@ export const EstimatePDFDocument: React.FC<EstimatePDFProps> = ({
         </Page>
 
         {/* PAGE 3: Checklist & Action Plan */}
-        <Page size="A4" style={styles.page}>
+        <Page size="A4" style={styles.pageChecklist}>
             <Text style={styles.serifTitle}>Checklist.</Text>
 
             {/* Checklist Status */}

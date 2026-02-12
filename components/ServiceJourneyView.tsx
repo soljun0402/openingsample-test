@@ -814,8 +814,8 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
         setEstimateResult({
           customerName: "예비 창업자",
           totalCostRange: {
-            min: estimatedCosts.min * 10000,
-            max: estimatedCosts.max * 10000
+            min: estimatedCosts.min * 100000,
+            max: estimatedCosts.max * 100000
           },
           locationData: {
             region: `서울시 강남구 ${dong}`,
@@ -826,14 +826,14 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
             ]
           },
           costBreakdown: [
-            { label: "보증금 및 권리금", min: storeSize * 300 * 10000, max: storeSize * 800 * 10000 },
+            { label: "보증금 및 권리금", min: storeSize * 300 * 100000, max: storeSize * 800 * 100000 },
             ...checklist.filter(i => i.estimatedCost.max > 0).map(item => {
               const isPerPyung = item.estimatedCost.unit.includes('평당');
               const multiplier = isPerPyung ? storeSize : 1;
               return {
                 label: item.title,
-                min: item.estimatedCost.min * multiplier * 10000,
-                max: item.estimatedCost.max * multiplier * 10000
+                min: item.estimatedCost.min * multiplier * 100000,
+                max: item.estimatedCost.max * multiplier * 100000
               };
             })
           ],
