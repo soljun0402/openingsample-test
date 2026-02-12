@@ -1,16 +1,24 @@
 import React from 'react';
 import { Page, Text, View, Document, StyleSheet, Font } from '@react-pdf/renderer';
 
-// Register Korean Font (NanumGothic)
+// Register Korean Font (Noto Sans KR)
 Font.register({
-    family: 'NanumGothic',
+    family: 'Noto Sans KR',
     fonts: [
         {
-            src: 'https://fonts.gstatic.com/s/nanumgothic/v23/PN_3Rfi-oW3hYwmKDpxS7F_z_tLfxno.ttf',
+            src: 'https://fonts.gstatic.com/s/notosanskr/v27/PbykFmXiEBPT4ITbgNA5Cgm203TpHt2u.ttf', // Light 300
+            fontWeight: 'light',
+        },
+        {
+            src: 'https://fonts.gstatic.com/s/notosanskr/v27/PbykFmXiEBPT4ITbgNA5Cgm207zlHt2u.ttf', // Regular 400
             fontWeight: 'normal',
         },
         {
-            src: 'https://fonts.gstatic.com/s/nanumgothic/v23/PN_oRfi-oW3hYwmKDpxS7F_z-7rGx40ssw.ttf',
+            src: 'https://fonts.gstatic.com/s/notosanskr/v27/PbykFmXiEBPT4ITbgNA5Cgm209HlHt2u.ttf', // Medium 500
+            fontWeight: 'medium',
+        },
+        {
+            src: 'https://fonts.gstatic.com/s/notosanskr/v27/PbykFmXiEBPT4ITbgNA5Cgm20bzpHt2u.ttf', // Bold 700
             fontWeight: 'bold',
         },
     ],
@@ -21,18 +29,18 @@ const styles = StyleSheet.create({
     page: {
         padding: 40,
         backgroundColor: '#FFFFFF',
-        fontFamily: 'NanumGothic',
+        fontFamily: 'Noto Sans KR',
     },
     // Typography
     serifTitle: {
-        fontFamily: 'NanumGothic', // Using generic for now as we only registered one
+        fontFamily: 'Noto Sans KR', // Using generic for now as we only registered one
         fontSize: 42,
         fontWeight: 'bold',
         marginBottom: 10,
         color: '#000000',
     },
     sectionTitle: {
-        fontFamily: 'NanumGothic',
+        fontFamily: 'Noto Sans KR',
         fontSize: 14,
         fontWeight: 'bold',
         marginBottom: 15,
@@ -51,7 +59,7 @@ const styles = StyleSheet.create({
         marginBottom: 60,
     },
     heroQuote: {
-        fontFamily: 'NanumGothic',
+        fontFamily: 'Noto Sans KR',
         fontSize: 24,
         fontStyle: 'normal', // Italic often not supported in CJK fonts directly without specific file
         marginBottom: 20,
@@ -59,7 +67,7 @@ const styles = StyleSheet.create({
         color: '#333333',
     },
     costRange: {
-        fontFamily: 'NanumGothic',
+        fontFamily: 'Noto Sans KR',
         fontWeight: 'bold',
         fontSize: 48,
         color: '#1E6FFF',
@@ -88,7 +96,7 @@ const styles = StyleSheet.create({
     },
     gridValue: {
         fontSize: 14,
-        fontFamily: 'NanumGothic',
+        fontFamily: 'Noto Sans KR',
         color: '#000000',
     },
     // Table
@@ -102,13 +110,13 @@ const styles = StyleSheet.create({
     tableLabel: {
         flex: 2,
         fontSize: 12,
-        fontFamily: 'NanumGothic',
+        fontFamily: 'Noto Sans KR',
     },
     tableValue: {
         flex: 1,
         fontSize: 12,
         textAlign: 'right',
-        fontFamily: 'NanumGothic',
+        fontFamily: 'Noto Sans KR',
         fontWeight: 'bold',
     },
     // Checklist
@@ -159,7 +167,7 @@ const styles = StyleSheet.create({
     },
     ctaTitle: {
         fontSize: 14,
-        fontFamily: 'NanumGothic',
+        fontFamily: 'Noto Sans KR',
         fontWeight: 'bold',
         color: '#1E6FFF',
         marginBottom: 8,
@@ -267,7 +275,7 @@ export const EstimatePDFDocument: React.FC<EstimatePDFProps> = ({
                     </View>
                 ))}
                 <View style={[styles.tableRow, { borderBottomWidth: 0, marginTop: 10 }]}>
-                    <Text style={[styles.tableLabel, { fontFamily: 'NanumGothic', fontWeight: 'bold' }]}>Total</Text>
+                    <Text style={[styles.tableLabel, { fontFamily: 'Noto Sans KR', fontWeight: 'bold' }]}>Total</Text>
                     <Text style={[styles.tableValue, { color: '#1E6FFF', fontSize: 14 }]}>
                         {formatCurrency(totalCostRange.min)} ~ {formatCurrency(totalCostRange.max)}원
                     </Text>
@@ -280,7 +288,7 @@ export const EstimatePDFDocument: React.FC<EstimatePDFProps> = ({
                 <View style={styles.checklistContainer}>
                     {/* Help Needed Column */}
                     <View style={styles.checklistCol}>
-                        <Text style={{ fontSize: 12, fontFamily: 'NanumGothic', fontWeight: 'bold', marginBottom: 10, color: '#FF9500' }}>
+                        <Text style={{ fontSize: 12, fontFamily: 'Noto Sans KR', fontWeight: 'bold', marginBottom: 10, color: '#FF9500' }}>
                             Required Attention ({checklist.worryCount})
                         </Text>
                         {checklist.worryItems.map((item, idx) => (
@@ -296,7 +304,7 @@ export const EstimatePDFDocument: React.FC<EstimatePDFProps> = ({
 
                     {/* Ready Column */}
                     <View style={styles.checklistCol}>
-                        <Text style={{ fontSize: 12, fontFamily: 'NanumGothic', fontWeight: 'bold', marginBottom: 10, color: '#34C759' }}>
+                        <Text style={{ fontSize: 12, fontFamily: 'Noto Sans KR', fontWeight: 'bold', marginBottom: 10, color: '#34C759' }}>
                             Ready ({checklist.readyCount})
                         </Text>
                         {checklist.readyItems.slice(0, 10).map((item, idx) => ( // Show only top 10 to fit page
