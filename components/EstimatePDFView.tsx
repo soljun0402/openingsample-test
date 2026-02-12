@@ -285,16 +285,16 @@ export const EstimatePDFDocument: React.FC<EstimatePDFProps> = ({
 
             <View style={styles.footer}>
                 <Text style={styles.footerText}>OPENING STARTUP SOLUTION</Text>
-                <Text style={styles.footerText}>Page 1 / 2</Text>
+                <Text style={styles.footerText}>Page 1 / 3</Text>
             </View>
         </Page>
 
-        {/* PAGE 2: Details & Checklist */}
-        <Page size="A4" style={styles.pageChecklist}>
+        {/* PAGE 2: Cost Breakdown */}
+        <Page size="A4" style={styles.pageDetails}>
             <Text style={styles.serifTitle}>Details.</Text>
 
             {/* Cost Breakdown */}
-            <View style={{ marginBottom: 20 }}>
+            <View style={{ marginBottom: 40, flex: 1 }}>
                 <Text style={styles.sectionTitle}>Cost Breakdown</Text>
                 {costBreakdown.map((item, idx) => (
                     <View key={idx} style={styles.tableRow}>
@@ -312,8 +312,18 @@ export const EstimatePDFDocument: React.FC<EstimatePDFProps> = ({
                 </View>
             </View>
 
+            <View style={styles.footer}>
+                <Text style={styles.footerText}>OPENING STARTUP SOLUTION</Text>
+                <Text style={styles.footerText}>Page 2 / 3</Text>
+            </View>
+        </Page>
+
+        {/* PAGE 3: Checklist & Action Plan */}
+        <Page size="A4" style={styles.pageChecklist}>
+            <Text style={styles.serifTitle}>Checklist.</Text>
+
             {/* Checklist Status */}
-            <View style={{ marginBottom: 20, flex: 1 }}>
+            <View style={{ marginBottom: 40, flex: 1 }}>
                 <Text style={styles.sectionTitle}>Preparation Status</Text>
                 <View style={styles.checklistContainer}>
                     {/* Help Needed Column */}
@@ -366,7 +376,7 @@ export const EstimatePDFDocument: React.FC<EstimatePDFProps> = ({
 
             <View style={styles.footer}>
                 <Text style={styles.footerText}>OPENING STARTUP SOLUTION</Text>
-                <Text style={styles.footerText}>Page 2 / 2</Text>
+                <Text style={styles.footerText}>Page 3 / 3</Text>
             </View>
         </Page>
     </Document>
