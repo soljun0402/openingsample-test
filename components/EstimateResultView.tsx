@@ -10,15 +10,22 @@ interface EstimateResultViewProps {
 }
 
 const formatCurrency = (amount: number) => {
-    if (amount >= 100000000) {
-        const uk = Math.floor(amount / 100000000);
-        const remainder = amount % 100000000;
+    // Safety check: specific fix for user report "2.241만원"
+    // If amount is very small (e.g. < 500,000), it's likely Man-won passed as Won.
+    let safeAmount = amount;
+    if (amount < 500000) {
+        safeAmount = amount * 10000;
+    }
+
+    if (safeAmount >= 100000000) {
+        const uk = Math.floor(safeAmount / 100000000);
+        const remainder = safeAmount % 100000000;
         const remainderMan = Math.floor(remainder / 10000);
         return remainderMan > 0
             ? `${uk}억 ${new Intl.NumberFormat('ko-KR').format(remainderMan)}만원`
             : `${uk}억원`;
     }
-    return new Intl.NumberFormat('ko-KR').format(Math.floor(amount / 10000)) + '만원';
+    return new Intl.NumberFormat('ko-KR').format(Math.floor(safeAmount / 10000)) + '만원';
 };
 
 export const EstimateResultView: React.FC<EstimateResultViewProps> = ({ data, onClose }) => {

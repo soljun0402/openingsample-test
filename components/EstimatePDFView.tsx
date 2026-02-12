@@ -28,7 +28,7 @@ Font.register({
 const styles = StyleSheet.create({
     page: {
         padding: 40,
-        paddingBottom: 80, // Moved up to avoid footer overlap
+        paddingBottom: 120, // Increased margin for footer
         backgroundColor: '#FFFFFF',
         fontFamily: 'Noto Sans KR',
     },
@@ -208,19 +208,25 @@ export interface EstimatePDFProps {
 
 // Helper
 const formatCurrency = (amount: number) => {
-    if (amount >= 100000000) {
-        const uk = Math.floor(amount / 100000000);
-        const remainder = amount % 100000000;
-        // remainder is in Won. Convert to Man-won for display (divide by 10000).
-        // e.g. 24,000,000 -> 2400 (man-won).
+    // Safety check: specific fix for user report "2.241만원"
+    // If amount is very small (e.g. < 100,000), it's likely Man-won passed as Won.
+    // 22410 Man-won = 2.2 Eok.
+    // If we receive 22410, treat as Man-won -> 224,100,000.
+    let safeAmount = amount;
+    if (amount < 500000) { // arbitrary threshold, 500k Won is very small for a store.
+        safeAmount = amount * 10000;
+    }
+
+    if (safeAmount >= 100000000) {
+        const uk = Math.floor(safeAmount / 100000000);
+        const remainder = safeAmount % 100000000;
         const remainderMan = Math.floor(remainder / 10000);
 
         return remainderMan > 0
             ? `${uk}억 ${new Intl.NumberFormat('ko-KR').format(remainderMan)}만원`
             : `${uk}억원`;
     }
-    // Less than 1 Eok.
-    return new Intl.NumberFormat('ko-KR').format(Math.floor(amount / 10000)) + '만원';
+    return new Intl.NumberFormat('ko-KR').format(Math.floor(safeAmount / 10000)) + '만원';
 };
 
 // Component
