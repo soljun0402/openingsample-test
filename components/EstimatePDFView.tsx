@@ -1,27 +1,40 @@
 import React from 'react';
 import { Page, Text, View, Document, StyleSheet, Font } from '@react-pdf/renderer';
 
-// Font registration (using standard fonts for MVP to avoid external file dep)
-// In a real app, we would register custom fonts here.
+// Register Korean Font (NanumGothic)
+Font.register({
+    family: 'NanumGothic',
+    fonts: [
+        {
+            src: 'https://fonts.gstatic.com/s/nanumgothic/v23/PN_3Rfi-oW3hYwmKDpxS7F_z_tLfxno.ttf',
+            fontWeight: 'normal',
+        },
+        {
+            src: 'https://fonts.gstatic.com/s/nanumgothic/v23/PN_oRfi-oW3hYwmKDpxS7F_z-7rGx40ssw.ttf',
+            fontWeight: 'bold',
+        },
+    ],
+});
 
 // Define styles
 const styles = StyleSheet.create({
     page: {
         padding: 40,
         backgroundColor: '#FFFFFF',
-        fontFamily: 'Helvetica',
+        fontFamily: 'NanumGothic',
     },
     // Typography
     serifTitle: {
-        fontFamily: 'Times-Roman',
+        fontFamily: 'NanumGothic', // Using generic for now as we only registered one
         fontSize: 42,
         fontWeight: 'bold',
         marginBottom: 10,
         color: '#000000',
     },
     sectionTitle: {
-        fontFamily: 'Helvetica-Bold', // Standard font bold
+        fontFamily: 'NanumGothic',
         fontSize: 14,
+        fontWeight: 'bold',
         marginBottom: 15,
         textTransform: 'uppercase',
         letterSpacing: 1.5,
@@ -38,15 +51,16 @@ const styles = StyleSheet.create({
         marginBottom: 60,
     },
     heroQuote: {
-        fontFamily: 'Times-Roman',
+        fontFamily: 'NanumGothic',
         fontSize: 24,
-        fontStyle: 'italic',
+        fontStyle: 'normal', // Italic often not supported in CJK fonts directly without specific file
         marginBottom: 20,
         lineHeight: 1.4,
         color: '#333333',
     },
     costRange: {
-        fontFamily: 'Helvetica-Bold',
+        fontFamily: 'NanumGothic',
+        fontWeight: 'bold',
         fontSize: 48,
         color: '#1E6FFF',
         marginBottom: 5,
@@ -74,7 +88,7 @@ const styles = StyleSheet.create({
     },
     gridValue: {
         fontSize: 14,
-        fontFamily: 'Times-Roman',
+        fontFamily: 'NanumGothic',
         color: '#000000',
     },
     // Table
@@ -88,13 +102,14 @@ const styles = StyleSheet.create({
     tableLabel: {
         flex: 2,
         fontSize: 12,
-        fontFamily: 'Helvetica',
+        fontFamily: 'NanumGothic',
     },
     tableValue: {
         flex: 1,
         fontSize: 12,
         textAlign: 'right',
-        fontFamily: 'Helvetica-Bold',
+        fontFamily: 'NanumGothic',
+        fontWeight: 'bold',
     },
     // Checklist
     checklistContainer: {
@@ -144,7 +159,8 @@ const styles = StyleSheet.create({
     },
     ctaTitle: {
         fontSize: 14,
-        fontFamily: 'Helvetica-Bold',
+        fontFamily: 'NanumGothic',
+        fontWeight: 'bold',
         color: '#1E6FFF',
         marginBottom: 8,
     },
@@ -251,7 +267,7 @@ export const EstimatePDFDocument: React.FC<EstimatePDFProps> = ({
                     </View>
                 ))}
                 <View style={[styles.tableRow, { borderBottomWidth: 0, marginTop: 10 }]}>
-                    <Text style={[styles.tableLabel, { fontFamily: 'Helvetica-Bold' }]}>Total</Text>
+                    <Text style={[styles.tableLabel, { fontFamily: 'NanumGothic', fontWeight: 'bold' }]}>Total</Text>
                     <Text style={[styles.tableValue, { color: '#1E6FFF', fontSize: 14 }]}>
                         {formatCurrency(totalCostRange.min)} ~ {formatCurrency(totalCostRange.max)}원
                     </Text>
@@ -264,7 +280,7 @@ export const EstimatePDFDocument: React.FC<EstimatePDFProps> = ({
                 <View style={styles.checklistContainer}>
                     {/* Help Needed Column */}
                     <View style={styles.checklistCol}>
-                        <Text style={{ fontSize: 12, fontFamily: 'Helvetica-Bold', marginBottom: 10, color: '#FF9500' }}>
+                        <Text style={{ fontSize: 12, fontFamily: 'NanumGothic', fontWeight: 'bold', marginBottom: 10, color: '#FF9500' }}>
                             Required Attention ({checklist.worryCount})
                         </Text>
                         {checklist.worryItems.map((item, idx) => (
@@ -280,7 +296,7 @@ export const EstimatePDFDocument: React.FC<EstimatePDFProps> = ({
 
                     {/* Ready Column */}
                     <View style={styles.checklistCol}>
-                        <Text style={{ fontSize: 12, fontFamily: 'Helvetica-Bold', marginBottom: 10, color: '#34C759' }}>
+                        <Text style={{ fontSize: 12, fontFamily: 'NanumGothic', fontWeight: 'bold', marginBottom: 10, color: '#34C759' }}>
                             Ready ({checklist.readyCount})
                         </Text>
                         {checklist.readyItems.slice(0, 10).map((item, idx) => ( // Show only top 10 to fit page
