@@ -1657,7 +1657,7 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
           <div className="space-y-5">
             {/* 안내 + 스킵 */}
             <div className="flex items-center justify-between">
-              <p className="text-xs text-slate-400">탭: 미확인 → 준비됨 → 도움필요</p>
+              <p className="text-xs text-slate-400">탭: 미확인 → 도움필요 → 준비됨</p>
               <button onClick={goToNextStep} className="text-xs text-brand-500 font-bold px-3 py-1.5 rounded-lg hover:bg-brand-50 transition-colors">
                 건너뛰기 →
               </button>
