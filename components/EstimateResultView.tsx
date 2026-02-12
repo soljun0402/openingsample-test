@@ -9,6 +9,18 @@ interface EstimateResultViewProps {
     onClose?: () => void;
 }
 
+const formatCurrency = (amount: number) => {
+    if (amount >= 100000000) {
+        const uk = Math.floor(amount / 100000000);
+        const remainder = amount % 100000000;
+        const remainderMan = Math.floor(remainder / 10000);
+        return remainderMan > 0
+            ? `${uk}억 ${new Intl.NumberFormat('ko-KR').format(remainderMan)}만원`
+            : `${uk}억원`;
+    }
+    return new Intl.NumberFormat('ko-KR').format(Math.floor(amount / 10000)) + '만원';
+};
+
 export const EstimateResultView: React.FC<EstimateResultViewProps> = ({ data, onClose }) => {
     const [loading, setLoading] = useState(true);
     const [progress, setProgress] = useState(0);
@@ -99,7 +111,7 @@ export const EstimateResultView: React.FC<EstimateResultViewProps> = ({ data, on
                             <div className="flex justify-between items-center">
                                 <span className="text-gray-600">예상 창업 비용</span>
                                 <span className="text-brand-600 font-bold text-xl">
-                                    {data.totalCostRange.min / 10000}~{data.totalCostRange.max / 10000}만원
+                                    {formatCurrency(data.totalCostRange.min)} ~ {formatCurrency(data.totalCostRange.max)}
                                 </span>
                             </div>
                             <div className="flex justify-between items-center">

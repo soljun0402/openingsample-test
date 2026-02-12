@@ -813,7 +813,10 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
       if (isGuestMode) {
         setEstimateResult({
           customerName: "예비 창업자",
-          totalCostRange: estimatedCosts,
+          totalCostRange: {
+            min: estimatedCosts.min * 10000,
+            max: estimatedCosts.max * 10000
+          },
           locationData: {
             region: `서울시 강남구 ${dong}`,
             analysis: [

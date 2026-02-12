@@ -28,6 +28,7 @@ Font.register({
 const styles = StyleSheet.create({
     page: {
         padding: 40,
+        paddingBottom: 80, // Moved up to avoid footer overlap
         backgroundColor: '#FFFFFF',
         fontFamily: 'Noto Sans KR',
     },
@@ -209,12 +210,17 @@ export interface EstimatePDFProps {
 const formatCurrency = (amount: number) => {
     if (amount >= 100000000) {
         const uk = Math.floor(amount / 100000000);
-        const remainder = Math.floor((amount % 100000000) / 10000);
-        return remainder > 0
-            ? `${uk}억 ${new Intl.NumberFormat('ko-KR').format(remainder)}만`
-            : `${uk}억`;
+        const remainder = amount % 100000000;
+        // remainder is in Won. Convert to Man-won for display (divide by 10000).
+        // e.g. 24,000,000 -> 2400 (man-won).
+        const remainderMan = Math.floor(remainder / 10000);
+
+        return remainderMan > 0
+            ? `${uk}억 ${new Intl.NumberFormat('ko-KR').format(remainderMan)}만원`
+            : `${uk}억원`;
     }
-    return new Intl.NumberFormat('ko-KR').format(amount / 10000) + '만';
+    // Less than 1 Eok.
+    return new Intl.NumberFormat('ko-KR').format(Math.floor(amount / 10000)) + '만원';
 };
 
 // Component
