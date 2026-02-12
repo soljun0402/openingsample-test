@@ -284,7 +284,7 @@ export const EstimatePDFDocument: React.FC<EstimatePDFProps> = ({
             </View>
 
             <View style={styles.footer}>
-                <Text style={styles.footerText}>OPENING STARTUP SOLUTION</Text>
+                <Text style={styles.footerText}>OPENING STARTUP SOLUTION (Rev. Final)</Text>
                 <Text style={styles.footerText}>Page 1 / 3</Text>
             </View>
         </Page>
@@ -313,7 +313,7 @@ export const EstimatePDFDocument: React.FC<EstimatePDFProps> = ({
             </View>
 
             <View style={styles.footer}>
-                <Text style={styles.footerText}>OPENING STARTUP SOLUTION</Text>
+                <Text style={styles.footerText}>OPENING STARTUP SOLUTION (Rev. Final)</Text>
                 <Text style={styles.footerText}>Page 2 / 3</Text>
             </View>
         </Page>
@@ -375,7 +375,7 @@ export const EstimatePDFDocument: React.FC<EstimatePDFProps> = ({
             </View>
 
             <View style={styles.footer}>
-                <Text style={styles.footerText}>OPENING STARTUP SOLUTION</Text>
+                <Text style={styles.footerText}>OPENING STARTUP SOLUTION (Rev. Final)</Text>
                 <Text style={styles.footerText}>Page 3 / 3</Text>
             </View>
         </Page>
