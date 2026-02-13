@@ -249,8 +249,15 @@ function App() {
     const ADMIN_PW = 'epdlfflalf1!';
     const PM_PW = 'epdlfflalf1!';
 
-    // Admin 로그인
+    // Admin 로그인 — Supabase Auth로 실제 인증 (DB 쓰기 권한 필요)
     if (email === 'admin' && password === ADMIN_PW) {
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: 'admin@opening.run',
+        password: ADMIN_PW,
+      });
+      if (signInError) {
+        console.error('Admin sign-in error:', signInError);
+      }
       setIsAdmin(true);
       setIsAuthenticated(true);
       setUser({ id: 'admin', name: '관리자', phone: '', type: 'KAKAO', joinedDate: new Date().toLocaleDateString() });
