@@ -132,6 +132,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigateToProjec
   const [showAllTasks, setShowAllTasks] = useState(false);
   const [calendarExpanded, setCalendarExpanded] = useState(false);
   const [calendarMonth, setCalendarMonth] = useState(() => new Date());
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
 
   // Keep currentStepRef in sync to avoid stale closures in realtime callback
   useEffect(() => {
@@ -444,6 +446,36 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigateToProjec
     setShowTossModal(true);
   };
 
+
+  // 프로젝트 취소
+  const cancelProject = async () => {
+    if (!project?.id || isGuestMode) return;
+    setCancelling(true);
+    try {
+      await supabase
+        .from('startup_projects')
+        .update({ status: 'CANCELLED' })
+        .eq('id', project.id);
+
+      await supabase.from('project_messages').insert({
+        project_id: project.id,
+        sender_type: 'SYSTEM',
+        message: '고객이 프로젝트를 취소했습니다.',
+      });
+
+      await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('project_id', project.id);
+
+      setShowCancelDialog(false);
+      setProject(null);
+    } catch (err) {
+      console.error('프로젝트 취소 실패:', err);
+      alert('프로젝트 취소에 실패했습니다. 다시 시도해주세요.');
+    }
+    setCancelling(false);
+  };
 
   const loadMessages = async (projectId: string) => {
     const { data } = await supabase
@@ -1160,6 +1192,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigateToProjec
             <p className={`font-bold ${currentTheme.text}`}>{formatPrice(project.estimated_total)}</p>
           </div>
         </div>
+        {!isGuestMode && (
+          <button
+            onClick={() => setShowCancelDialog(true)}
+            className="mt-3 w-full text-xs text-red-400 hover:text-red-600 py-2 border-t border-slate-100 transition-colors"
+          >
+            프로젝트 취소하기
+          </button>
+        )}
       </div>
 
       {/* PM 카드 */}
@@ -1601,6 +1641,37 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigateToProjec
           {calendarExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
         </button>
       </div>
+      {/* 프로젝트 취소 확인 다이얼로그 */}
+      {showCancelDialog && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-sm p-6">
+            <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle size={32} className="text-red-600" />
+            </div>
+            <h3 className="text-xl font-bold text-center mb-2">프로젝트를 취소할까요?</h3>
+            <p className="text-gray-500 text-center text-sm mb-6">
+              취소하면 현재까지의 진행 상황이 모두 중단됩니다.<br/>이 작업은 되돌릴 수 없습니다.
+            </p>
+            <div className="space-y-2">
+              <button
+                onClick={cancelProject}
+                disabled={cancelling}
+                className="w-full py-3 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+              >
+                {cancelling ? <Loader2 className="animate-spin" size={18} /> : null}
+                {cancelling ? '취소 처리중...' : '프로젝트 취소'}
+              </button>
+              <button
+                onClick={() => setShowCancelDialog(false)}
+                className="w-full py-3 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors"
+              >
+                계속 진행하기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 토스 결제위젯 모달 */}
       {showTossModal && tossModalParams && (
         <TossPaymentModal

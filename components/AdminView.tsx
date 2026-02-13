@@ -1492,19 +1492,53 @@ export const AdminView: React.FC<AdminViewProps> = ({ onLogout }) => {
                           }
 
                           return (
-                            <div className="flex items-center gap-2 pt-2 border-t">
-                              <span className="text-xs text-gray-500">단계:</span>
-                              <select
-                                className="flex-1 text-xs px-2 py-1.5 border rounded-lg bg-white"
-                                value={selectedProject?.current_step || 7}
-                                onChange={(e) => changeProjectStep(selectedProjectId, Number(e.target.value))}
-                              >
-                                {Object.entries(STEP_LABELS).map(([step, label]) => (
-                                  <option key={step} value={step}>
-                                    {step}. {label}
-                                  </option>
-                                ))}
-                              </select>
+                            <div className="space-y-2 pt-2 border-t">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-gray-500">단계:</span>
+                                <select
+                                  className="flex-1 text-xs px-2 py-1.5 border rounded-lg bg-white"
+                                  value={selectedProject?.current_step || 7}
+                                  onChange={(e) => changeProjectStep(selectedProjectId, Number(e.target.value))}
+                                >
+                                  {Object.entries(STEP_LABELS).map(([step, label]) => (
+                                    <option key={step} value={step}>
+                                      {step}. {label}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                              {selectedProject?.status !== 'CANCELLED' && (
+                                <button
+                                  onClick={async () => {
+                                    if (!window.confirm('이 프로젝트를 취소하시겠습니까?\n취소된 프로젝트는 복구할 수 없습니다.')) return;
+                                    await supabase.from('startup_projects').update({ status: 'CANCELLED' }).eq('id', selectedProjectId);
+                                    await supabase.from('project_messages').insert({
+                                      project_id: selectedProjectId,
+                                      sender_type: 'SYSTEM',
+                                      message: '관리자에 의해 프로젝트가 취소되었습니다.',
+                                    });
+                                    if (selectedProject?.user_id) {
+                                      await createNotification({
+                                        userId: selectedProject.user_id,
+                                        projectId: selectedProjectId,
+                                        type: 'PROJECT_UPDATE',
+                                        title: '프로젝트 취소',
+                                        message: '프로젝트가 취소되었습니다. 자세한 내용은 채팅을 확인해주세요.',
+                                      });
+                                    }
+                                    loadAllProjects();
+                                    loadProjectMessages(selectedProjectId);
+                                  }}
+                                  className="w-full text-xs text-red-500 hover:text-red-700 hover:bg-red-50 py-1.5 rounded-lg border border-red-200 transition-colors"
+                                >
+                                  프로젝트 취소
+                                </button>
+                              )}
+                              {selectedProject?.status === 'CANCELLED' && (
+                                <div className="text-xs text-center text-red-500 font-bold bg-red-50 py-1.5 rounded-lg">
+                                  취소된 프로젝트
+                                </div>
+                              )}
                             </div>
                           );
                         })()}
