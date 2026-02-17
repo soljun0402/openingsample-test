@@ -16,8 +16,12 @@ import {
   Check, X, AlertTriangle, HelpCircle, ChevronDown, ChevronUp,
   Wind, Flame, ChefHat, Package, Monitor, Truck, Refrigerator, Armchair,
   Users, TrendingDown, Navigation, MapPinned, CircleDollarSign, Eye,
-  Briefcase, MoreHorizontal, ImagePlus
+  Briefcase, MoreHorizontal, ImagePlus, RotateCcw
 } from 'lucide-react';
+import {
+  SEOUL_GUS, SEOUL_DONGS, DONG_INFO_ALL, DONG_COORDINATES_ALL,
+  GU_GROUPS, GU_GROUP_COLORS
+} from '../data/seoulDistricts';
 
 interface ServiceJourneyViewProps {
   onBack?: () => void;
@@ -88,19 +92,6 @@ const BUSINESS_CATEGORIES = [
   { id: 'etc', label: '기타', icon: MoreHorizontal, color: 'bg-gray-100 text-gray-700' },
 ];
 
-// 강남구 동 목록 (주요 랜드마크 포함)
-const GANGNAM_DONGS = [
-  { name: '역삼동', landmark: '강남역, 강남역 술집거리' },
-  { name: '논현동', landmark: '논현역, 학동역' },
-  { name: '신사동', landmark: '가로수길, 압구정로데오' },
-  { name: '청담동', landmark: '청담동 명품거리' },
-  { name: '삼성동', landmark: '코엑스, 봉은사역' },
-  { name: '대치동', landmark: '대치동 학원가' },
-  { name: '압구정동', landmark: '압구정역, 현대백화점' },
-  { name: '도곡동', landmark: '도곡역, 매봉역' },
-  { name: '개포동', landmark: '개포동, 대모산' },
-  { name: '일원동', landmark: '삼성서울병원' },
-];
 
 // 매장 규모
 const STORE_SIZES = [
@@ -220,19 +211,6 @@ const getChecklistForCategory = (categoryId: string): Omit<ChecklistItem, 'statu
   return [...CHECKLIST_COMMON, ...specificItems];
 };
 
-// 동별 상권 정보
-const DONG_INFO: Record<string, { competitors: number; footTraffic: string; avgRent: number; description: string }> = {
-  '역삼동': { competitors: 45, footTraffic: '일 평균 85,000명', avgRent: 350, description: '강남역 상권, 술집거리 밀집, 야간 유동인구 높음' },
-  '논현동': { competitors: 28, footTraffic: '일 평균 42,000명', avgRent: 280, description: '학동사거리 중심, 주거+상업 복합' },
-  '신사동': { competitors: 35, footTraffic: '일 평균 55,000명', avgRent: 400, description: '가로수길 상권, 젊은층 유동인구' },
-  '청담동': { competitors: 18, footTraffic: '일 평균 25,000명', avgRent: 500, description: '고급 상권, 배달보다 매장 중심' },
-  '삼성동': { competitors: 32, footTraffic: '일 평균 70,000명', avgRent: 380, description: '코엑스 상권, 직장인 중심' },
-  '대치동': { competitors: 22, footTraffic: '일 평균 35,000명', avgRent: 250, description: '학원가 상권, 저녁 시간대 집중' },
-  '압구정동': { competitors: 25, footTraffic: '일 평균 40,000명', avgRent: 420, description: '로데오거리, 젊은층+고소득층' },
-  '도곡동': { competitors: 15, footTraffic: '일 평균 20,000명', avgRent: 200, description: '주거 중심, 배달 수요 높음' },
-  '개포동': { competitors: 12, footTraffic: '일 평균 15,000명', avgRent: 180, description: '재건축 진행중, 배달 위주' },
-  '일원동': { competitors: 10, footTraffic: '일 평균 18,000명', avgRent: 170, description: '병원 상권, 안정적 수요' },
-};
 
 // 단계 정의
 const JOURNEY_STEPS = [
@@ -245,19 +223,6 @@ const JOURNEY_STEPS = [
   { step: 7, title: '매니저 배정', description: '전담 매니저가 배정됩니다' },
 ];
 
-// 동별 카카오맵 좌표
-const DONG_COORDINATES: Record<string, { lat: number; lng: number }> = {
-  '역삼동': { lat: 37.5007, lng: 127.0365 },
-  '논현동': { lat: 37.5112, lng: 127.0288 },
-  '신사동': { lat: 37.5239, lng: 127.0237 },
-  '청담동': { lat: 37.5247, lng: 127.0473 },
-  '삼성동': { lat: 37.5088, lng: 127.0628 },
-  '대치동': { lat: 37.4946, lng: 127.0576 },
-  '압구정동': { lat: 37.5273, lng: 127.0284 },
-  '도곡동': { lat: 37.4889, lng: 127.0463 },
-  '개포동': { lat: 37.4774, lng: 127.0521 },
-  '일원동': { lat: 37.4836, lng: 127.0856 },
-};
 
 // 단계별 색상 테마
 const STEP_COLORS: Record<number, { bg: string; text: string; accent: string }> = {
@@ -294,6 +259,7 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
   // 폼 데이터
   const [businessCategory, setBusinessCategory] = useState('');
   const [hasRealEstateContract, setHasRealEstateContract] = useState<boolean | null>(null);
+  const [selectedGu, setSelectedGu] = useState('');
   const [dong, setDong] = useState('');
   const [storeSize, setStoreSize] = useState<number | ''>('');
   const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
@@ -394,6 +360,7 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
       setProject(proj);
       setCurrentStep(proj.current_step || 6);
       setBusinessCategory(proj.business_category);
+      setSelectedGu(proj.location_district || '강남구');
       setDong(proj.location_dong);
       setStoreSize(proj.store_size);
       setEstimatedCosts({ min: (proj.estimated_total / 10000) * 0.8, max: (proj.estimated_total / 10000) * 1.2 });
@@ -733,7 +700,7 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
     // 시스템 메시지 준비
     let systemMsg = `📋 프로젝트 요약\n\n`;
     systemMsg += `• 업종: ${category?.label}\n`;
-    systemMsg += `• 위치: 강남구 ${dong}\n`;
+    systemMsg += `• 위치: ${selectedGu} ${dong}\n`;
     systemMsg += `• 규모: ${storeSize}평\n`;
     systemMsg += `• 예상 비용: ${formatPriceMan(estimatedCosts.min)} ~ ${formatPriceMan(estimatedCosts.max)}원\n\n`;
     if (doneItems.length > 0) systemMsg += `✅ 이미 준비됨: ${doneItems.join(', ')}\n`;
@@ -751,6 +718,7 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
     if (isGuestMode) {
       const pendingData = {
         businessCategory,
+        selectedGu,
         dong,
         storeSize,
         estimatedTotal: ((estimatedCosts.min + estimatedCosts.max) / 2) * 10000,
@@ -779,7 +747,7 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
         user_id: authUser.id,
         business_category: businessCategory,
         location_city: '서울시',
-        location_district: '강남구',
+        location_district: selectedGu,
         location_dong: dong,
         store_size: storeSize,
         estimated_total: ((estimatedCosts.min + estimatedCosts.max) / 2) * 10000,
@@ -900,7 +868,7 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
   const canProceed = () => {
     switch (currentStep) {
       case 1: return businessCategory !== '' && hasRealEstateContract !== null;
-      case 2: return dong !== '';
+      case 2: return selectedGu !== '' && dong !== '';
       case 3: return true;
       case 4: return storeSize > 0;
       case 5: return true;
@@ -1129,7 +1097,7 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
             <div className="flex-1 min-w-0">
               <h1 className="font-bold text-lg truncate">내 창업 프로젝트</h1>
               <p className="text-xs text-white/70">
-                강남구 {dong} · {BUSINESS_CATEGORIES.find(c => c.id === businessCategory)?.label} · {storeSize}평
+                {selectedGu} {dong} · {BUSINESS_CATEGORIES.find(c => c.id === businessCategory)?.label} · {storeSize}평
               </p>
             </div>
             <img src="/favicon-new.png" alt="오프닝" className="w-10 h-10 rounded-xl bg-white/20 p-1" />
@@ -1220,7 +1188,7 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
               <div className="p-4 bg-gray-50 border-t animate-fade-in">
                 <h4 className="font-bold text-sm text-gray-700 mb-3 flex items-center gap-2">
                   <Calculator size={16} className="text-brand-600" />
-                  비용 상세 내역 (강남구 {dong} 기준)
+                  비용 상세 내역 ({selectedGu} {dong} 기준)
                 </h4>
 
                 <div className="space-y-2 text-sm">
@@ -1538,40 +1506,82 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
           </div>
         )}
 
-        {/* Step 2: 위치 선택 */}
+        {/* Step 2: 위치 선택 (구 → 동 2단계) */}
         {currentStep === 2 && (
           <div className="space-y-4">
             <div className="bg-brand-50 rounded-xl p-4 border border-brand-100">
               <div className="flex items-center gap-2 text-brand-700 mb-1">
                 <MapPin size={18} />
-                <span className="font-bold">서울시 강남구</span>
+                <span className="font-bold">서울시 지역 선택</span>
               </div>
-              <p className="text-sm text-brand-600">현재 강남구에서만 서비스 이용 가능</p>
+              <p className="text-sm text-brand-600">
+                {!selectedGu ? '구를 먼저 선택해주세요' : `${selectedGu} > 동을 선택해주세요`}
+              </p>
             </div>
 
-            <div className="space-y-2">
-              {GANGNAM_DONGS.map(d => (
-                <button
-                  key={d.name}
-                  onClick={() => setDong(d.name)}
-                  className={`w-full p-4 rounded-xl border-2 text-left transition-all ${
-                    dong === d.name
-                      ? 'border-brand-600 bg-brand-50'
-                      : 'border-gray-200 hover:border-gray-300 bg-white'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className={`font-bold ${dong === d.name ? 'text-brand-700' : 'text-gray-900'}`}>
-                        {d.name}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-0.5">{d.landmark}</p>
+            {/* 구 선택 단계 */}
+            {!selectedGu ? (
+              <div className="space-y-4">
+                {GU_GROUPS.map(group => (
+                  <div key={group}>
+                    <h3 className={`text-sm font-bold mb-2 ${GU_GROUP_COLORS[group] || 'text-gray-700'}`}>{group}</h3>
+                    <div className="grid grid-cols-2 gap-2">
+                      {SEOUL_GUS.filter(g => g.group === group).map(gu => (
+                        <button
+                          key={gu.name}
+                          onClick={() => { setSelectedGu(gu.name); setDong(''); }}
+                          className="p-3 rounded-xl border-2 border-gray-200 hover:border-brand-400 bg-white text-left transition-all"
+                        >
+                          <p className="font-bold text-sm text-gray-900">{gu.name}</p>
+                          <p className="text-xs text-gray-500 mt-0.5 truncate">{gu.landmark}</p>
+                        </button>
+                      ))}
                     </div>
-                    {dong === d.name && <CheckCircle size={20} className="text-brand-600" />}
                   </div>
-                </button>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              /* 동 선택 단계 */
+              <div className="space-y-3">
+                <div className="flex items-center justify-between bg-white rounded-xl border p-3">
+                  <div className="flex items-center gap-2">
+                    <MapPinned size={16} className="text-brand-600" />
+                    <span className="font-bold text-sm text-brand-700">{selectedGu}</span>
+                  </div>
+                  <button
+                    onClick={() => { setSelectedGu(''); setDong(''); }}
+                    className="flex items-center gap-1 text-xs text-gray-500 hover:text-brand-600 font-bold px-2 py-1 rounded-lg hover:bg-brand-50 transition-colors"
+                  >
+                    <RotateCcw size={12} />
+                    변경
+                  </button>
+                </div>
+
+                <div className="space-y-2">
+                  {(SEOUL_DONGS[selectedGu] || []).map(d => (
+                    <button
+                      key={d.name}
+                      onClick={() => setDong(d.name)}
+                      className={`w-full p-4 rounded-xl border-2 text-left transition-all ${
+                        dong === d.name
+                          ? 'border-brand-600 bg-brand-50'
+                          : 'border-gray-200 hover:border-gray-300 bg-white'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className={`font-bold ${dong === d.name ? 'text-brand-700' : 'text-gray-900'}`}>
+                            {d.name}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-0.5">{d.landmark}</p>
+                        </div>
+                        {dong === d.name && <CheckCircle size={20} className="text-brand-600" />}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -1582,7 +1592,7 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
             <div className="bg-white rounded-xl border overflow-hidden">
               <div className="aspect-video bg-gray-100 relative">
                 <iframe
-                  src={`https://map.kakao.com/link/map/${dong},${DONG_COORDINATES[dong]?.lat || 37.5},${DONG_COORDINATES[dong]?.lng || 127.0}`}
+                  src={`https://map.kakao.com/link/map/${dong},${DONG_COORDINATES_ALL[dong]?.lat || 37.5},${DONG_COORDINATES_ALL[dong]?.lng || 127.0}`}
                   width="100%"
                   height="100%"
                   style={{ border: 0 }}
@@ -1593,17 +1603,17 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
                 <div className="absolute top-3 left-3 bg-white px-3 py-1.5 rounded-lg shadow-lg">
                   <div className="flex items-center gap-2">
                     <MapPinned size={16} className="text-brand-600" />
-                    <span className="font-bold text-sm">강남구 {dong}</span>
+                    <span className="font-bold text-sm">{selectedGu} {dong}</span>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* 상권 분석 요약 */}
-            {DONG_INFO[dong] && (
+            {DONG_INFO_ALL[dong] && (
               <>
                 <div className="bg-brand-50 rounded-xl p-4 border border-brand-100">
-                  <p className="text-sm text-brand-800">{DONG_INFO[dong].description}</p>
+                  <p className="text-sm text-brand-800">{DONG_INFO_ALL[dong].description}</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -1613,7 +1623,7 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
                       <Users size={18} />
                       <span className="text-xs font-bold">유동인구</span>
                     </div>
-                    <p className="text-lg font-black text-slate-900">{DONG_INFO[dong].footTraffic}</p>
+                    <p className="text-lg font-black text-slate-900">{DONG_INFO_ALL[dong].footTraffic}</p>
                   </div>
 
                   {/* 경쟁업체 */}
@@ -1624,7 +1634,7 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
                         주변 {BUSINESS_CATEGORIES.find(c => c.id === businessCategory)?.label || '음식점'}
                       </span>
                     </div>
-                    <p className="text-lg font-black text-slate-900">{DONG_INFO[dong].competitors}개</p>
+                    <p className="text-lg font-black text-slate-900">{DONG_INFO_ALL[dong].competitors}개</p>
                     <p className="text-xs text-gray-500 mt-1">반경 500m 내</p>
                   </div>
 
@@ -1634,7 +1644,7 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
                       <CircleDollarSign size={18} />
                       <span className="text-xs font-bold">평균 임대료</span>
                     </div>
-                    <p className="text-lg font-black text-slate-900">{DONG_INFO[dong].avgRent}만원</p>
+                    <p className="text-lg font-black text-slate-900">{DONG_INFO_ALL[dong].avgRent}만원</p>
                     <p className="text-xs text-gray-500 mt-1">평당/월</p>
                   </div>
 
@@ -1645,10 +1655,10 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
                       <span className="text-xs font-bold">상권 등급</span>
                     </div>
                     <p className="text-lg font-black text-green-600">
-                      {DONG_INFO[dong].avgRent >= 350 ? 'A급' : DONG_INFO[dong].avgRent >= 250 ? 'B급' : 'C급'}
+                      {DONG_INFO_ALL[dong].avgRent >= 350 ? 'A급' : DONG_INFO_ALL[dong].avgRent >= 250 ? 'B급' : 'C급'}
                     </p>
                     <p className="text-xs text-gray-500 mt-1">
-                      {DONG_INFO[dong].avgRent >= 350 ? '프리미엄' : DONG_INFO[dong].avgRent >= 250 ? '우량' : '보통'}
+                      {DONG_INFO_ALL[dong].avgRent >= 350 ? '프리미엄' : DONG_INFO_ALL[dong].avgRent >= 250 ? '우량' : '보통'}
                     </p>
                   </div>
                 </div>
@@ -1662,27 +1672,27 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-600">경쟁 강도</span>
-                      <span className={`font-bold ${DONG_INFO[dong].competitors > 30 ? 'text-red-600' : DONG_INFO[dong].competitors > 20 ? 'text-yellow-600' : 'text-green-600'}`}>
-                        {DONG_INFO[dong].competitors > 30 ? '높음 (과밀)' : DONG_INFO[dong].competitors > 20 ? '보통' : '낮음 (기회)'}
+                      <span className={`font-bold ${DONG_INFO_ALL[dong].competitors > 30 ? 'text-red-600' : DONG_INFO_ALL[dong].competitors > 20 ? 'text-yellow-600' : 'text-green-600'}`}>
+                        {DONG_INFO_ALL[dong].competitors > 30 ? '높음 (과밀)' : DONG_INFO_ALL[dong].competitors > 20 ? '보통' : '낮음 (기회)'}
                       </span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-600">배달 수요</span>
                       <span className="font-bold text-brand-600">
-                        {DONG_INFO[dong].avgRent < 250 ? '높음' : '보통'}
+                        {DONG_INFO_ALL[dong].avgRent < 250 ? '높음' : '보통'}
                       </span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-600">추천도</span>
-                      <span className={`font-bold ${DONG_INFO[dong].competitors < 25 ? 'text-green-600' : 'text-yellow-600'}`}>
-                        {DONG_INFO[dong].competitors < 25 ? '추천' : '검토 필요'}
+                      <span className={`font-bold ${DONG_INFO_ALL[dong].competitors < 25 ? 'text-green-600' : 'text-yellow-600'}`}>
+                        {DONG_INFO_ALL[dong].competitors < 25 ? '추천' : '검토 필요'}
                       </span>
                     </div>
                   </div>
                 </div>
 
                 {/* 주의사항 */}
-                {DONG_INFO[dong].competitors > 30 && (
+                {DONG_INFO_ALL[dong].competitors > 30 && (
                   <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
                     <div className="flex items-start gap-2">
                       <AlertTriangle size={18} className="text-yellow-600 shrink-0 mt-0.5" />
@@ -1833,7 +1843,7 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
             {/* 비용 상세 */}
             <div className="bg-white rounded-xl border overflow-hidden">
               <div className="bg-gray-50 px-4 py-2 border-b">
-                <h3 className="font-bold text-sm text-gray-700">비용 상세 (강남구 {dong} 기준)</h3>
+                <h3 className="font-bold text-sm text-gray-700">비용 상세 ({selectedGu} {dong} 기준)</h3>
               </div>
               <div className="divide-y">
                 <div className="p-3 flex items-center justify-between">
@@ -1920,11 +1930,11 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
                     max: estimatedCosts.max * 10000,
                   },
                   locationData: {
-                    region: `서울시 강남구 ${dong}`,
+                    region: `서울시 ${selectedGu} ${dong}`,
                     analysis: [
                       { label: '주요 타겟', value: '20-30대 직장인/주거' },
-                      { label: '유동 인구', value: DONG_INFO[dong]?.footTraffic || '정보 없음' },
-                      { label: '경쟁 점포', value: `${DONG_INFO[dong]?.competitors || 0}개 (반경 500m)` },
+                      { label: '유동 인구', value: DONG_INFO_ALL[dong]?.footTraffic || '정보 없음' },
+                      { label: '경쟁 점포', value: `${DONG_INFO_ALL[dong]?.competitors || 0}개 (반경 500m)` },
                     ],
                   },
                   costBreakdown: [
