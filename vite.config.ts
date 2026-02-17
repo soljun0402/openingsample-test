@@ -7,6 +7,13 @@ export default defineConfig(({ mode }) => {
       server: {
         port: 3000,
         host: '0.0.0.0',
+        proxy: {
+          '/api/seoul': {
+            target: 'http://openapi.seoul.go.kr:8088',
+            changeOrigin: true,
+            rewrite: (path) => path.replace(/^\/api\/seoul/, ''),
+          },
+        },
       },
       plugins: [react()],
       esbuild: {

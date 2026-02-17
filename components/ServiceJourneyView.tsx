@@ -23,6 +23,8 @@ import {
   SEOUL_GUS, SEOUL_DONGS, DONG_INFO_ALL, DONG_COORDINATES_ALL,
   GU_GROUPS, GU_GROUP_COLORS
 } from '../data/seoulDistricts';
+import { getMarketAnalysis, MarketAnalysisData } from '../utils/seoulDataApi';
+import { getCategoryMetric } from '../data/categoryMetrics';
 
 interface ServiceJourneyViewProps {
   onBack?: () => void;
@@ -310,6 +312,10 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
   const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
   const [pmMessage, setPmMessage] = useState('');
 
+  // 상권 분석 데이터 (서울 열린데이터 API)
+  const [marketData, setMarketData] = useState<MarketAnalysisData | null>(null);
+  const [marketDataLoading, setMarketDataLoading] = useState(false);
+
   // 업종 선택 시 체크리스트 초기화
   useEffect(() => {
     if (businessCategory) {
@@ -317,6 +323,22 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
       setChecklist(items.map(item => ({ ...item, status: 'unchecked' as const })));
     }
   }, [businessCategory]);
+
+  // Step 3 진입 시 상권 데이터 로드
+  useEffect(() => {
+    if (currentStep === 3 && dong) {
+      setMarketDataLoading(true);
+      getMarketAnalysis(dong)
+        .then(data => setMarketData(data))
+        .catch(() => setMarketData(null))
+        .finally(() => setMarketDataLoading(false));
+    }
+  }, [currentStep, dong]);
+
+  // dong 변경 시 marketData 초기화
+  useEffect(() => {
+    setMarketData(null);
+  }, [dong]);
 
   // 결과 데이터
   const [estimatedCosts, setEstimatedCosts] = useState<{ min: number; max: number }>({ min: 0, max: 0 });
@@ -1654,104 +1676,192 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
               </div>
             </div>
 
+            {/* 로딩 */}
+            {marketDataLoading && (
+              <div className="bg-white rounded-xl border p-8 flex flex-col items-center gap-3">
+                <Loader2 size={28} className="animate-spin text-brand-600" />
+                <p className="text-sm text-gray-500">상권 데이터를 불러오고 있습니다...</p>
+              </div>
+            )}
+
             {/* 상권 분석 요약 */}
-            {DONG_INFO_ALL[dong] && (
-              <>
-                <div className="bg-brand-50 rounded-xl p-4 border border-brand-100">
-                  <p className="text-sm text-brand-800">{DONG_INFO_ALL[dong].description}</p>
-                </div>
+            {!marketDataLoading && (() => {
+              const md = marketData || (DONG_INFO_ALL[dong] ? {
+                footTraffic: DONG_INFO_ALL[dong].footTraffic,
+                footTrafficRaw: 0,
+                competitors: DONG_INFO_ALL[dong].competitors,
+                avgRent: DONG_INFO_ALL[dong].avgRent,
+                description: DONG_INFO_ALL[dong].description,
+                source: 'fallback' as const,
+              } : null);
+              if (!md) return null;
 
-                <div className="grid grid-cols-2 gap-3">
-                  {/* 유동인구 */}
+              const categoryMetric = getCategoryMetric(businessCategory);
+              const metricResult = categoryMetric.calculate({
+                population: marketData?.population,
+                stores: marketData?.stores,
+                sales: marketData?.sales,
+                avgRent: md.avgRent,
+                competitors: md.competitors,
+                footTrafficRaw: md.footTrafficRaw,
+              });
+
+              return (
+                <>
+                  {/* 데이터 출처 배지 */}
+                  <div className="flex items-center gap-2">
+                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${
+                      md.source === 'api'
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-gray-100 text-gray-600'
+                    }`}>
+                      <BarChart3 size={12} />
+                      {md.source === 'api' ? '서울시 공공데이터 기반' : '오프닝 자체 데이터'}
+                    </span>
+                  </div>
+
+                  <div className="bg-brand-50 rounded-xl p-4 border border-brand-100">
+                    <p className="text-sm text-brand-800">{md.description}</p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    {/* 유동인구 */}
+                    <div className="bg-white rounded-xl border p-4">
+                      <div className="flex items-center gap-2 mb-2 text-gray-500">
+                        <Users size={18} />
+                        <span className="text-xs font-bold">유동인구</span>
+                      </div>
+                      <p className="text-lg font-black text-slate-900">{md.footTraffic}</p>
+                    </div>
+
+                    {/* 경쟁업체 */}
+                    <div className="bg-white rounded-xl border p-4">
+                      <div className="flex items-center gap-2 mb-2 text-gray-500">
+                        <Store size={18} />
+                        <span className="text-xs font-bold">
+                          주변 {BUSINESS_CATEGORIES.find(c => c.id === businessCategory)?.label || '음식점'}
+                        </span>
+                      </div>
+                      <p className="text-lg font-black text-slate-900">{md.competitors}개</p>
+                      <p className="text-xs text-gray-500 mt-1">반경 500m 내</p>
+                    </div>
+
+                    {/* 평균 임대료 */}
+                    <div className="bg-white rounded-xl border p-4">
+                      <div className="flex items-center gap-2 mb-2 text-gray-500">
+                        <CircleDollarSign size={18} />
+                        <span className="text-xs font-bold">평균 임대료</span>
+                      </div>
+                      <p className="text-lg font-black text-slate-900">{md.avgRent}만원</p>
+                      <p className="text-xs text-gray-500 mt-1">평당/월</p>
+                    </div>
+
+                    {/* 상권 등급 */}
+                    <div className="bg-white rounded-xl border p-4">
+                      <div className="flex items-center gap-2 mb-2 text-gray-500">
+                        <TrendingUp size={18} />
+                        <span className="text-xs font-bold">상권 등급</span>
+                      </div>
+                      <p className="text-lg font-black text-green-600">
+                        {md.avgRent >= 350 ? 'A급' : md.avgRent >= 250 ? 'B급' : 'C급'}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {md.avgRent >= 350 ? '프리미엄' : md.avgRent >= 250 ? '우량' : '보통'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* 경쟁 분석 (업종별 맞춤 지표) */}
                   <div className="bg-white rounded-xl border p-4">
-                    <div className="flex items-center gap-2 mb-2 text-gray-500">
-                      <Users size={18} />
-                      <span className="text-xs font-bold">유동인구</span>
-                    </div>
-                    <p className="text-lg font-black text-slate-900">{DONG_INFO_ALL[dong].footTraffic}</p>
-                  </div>
-
-                  {/* 경쟁업체 */}
-                  <div className="bg-white rounded-xl border p-4">
-                    <div className="flex items-center gap-2 mb-2 text-gray-500">
-                      <Store size={18} />
-                      <span className="text-xs font-bold">
-                        주변 {BUSINESS_CATEGORIES.find(c => c.id === businessCategory)?.label || '음식점'}
-                      </span>
-                    </div>
-                    <p className="text-lg font-black text-slate-900">{DONG_INFO_ALL[dong].competitors}개</p>
-                    <p className="text-xs text-gray-500 mt-1">반경 500m 내</p>
-                  </div>
-
-                  {/* 평균 임대료 */}
-                  <div className="bg-white rounded-xl border p-4">
-                    <div className="flex items-center gap-2 mb-2 text-gray-500">
-                      <CircleDollarSign size={18} />
-                      <span className="text-xs font-bold">평균 임대료</span>
-                    </div>
-                    <p className="text-lg font-black text-slate-900">{DONG_INFO_ALL[dong].avgRent}만원</p>
-                    <p className="text-xs text-gray-500 mt-1">평당/월</p>
-                  </div>
-
-                  {/* 상권 등급 */}
-                  <div className="bg-white rounded-xl border p-4">
-                    <div className="flex items-center gap-2 mb-2 text-gray-500">
-                      <TrendingUp size={18} />
-                      <span className="text-xs font-bold">상권 등급</span>
-                    </div>
-                    <p className="text-lg font-black text-green-600">
-                      {DONG_INFO_ALL[dong].avgRent >= 350 ? 'A급' : DONG_INFO_ALL[dong].avgRent >= 250 ? 'B급' : 'C급'}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {DONG_INFO_ALL[dong].avgRent >= 350 ? '프리미엄' : DONG_INFO_ALL[dong].avgRent >= 250 ? '우량' : '보통'}
-                    </p>
-                  </div>
-                </div>
-
-                {/* 경쟁 분석 */}
-                <div className="bg-white rounded-xl border p-4">
-                  <h3 className="font-bold text-sm mb-3 flex items-center gap-2">
-                    <Eye size={16} className="text-brand-600" />
-                    {BUSINESS_CATEGORIES.find(c => c.id === businessCategory)?.label} 경쟁 분석
-                  </h3>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">경쟁 강도</span>
-                      <span className={`font-bold ${DONG_INFO_ALL[dong].competitors > 30 ? 'text-red-600' : DONG_INFO_ALL[dong].competitors > 20 ? 'text-yellow-600' : 'text-green-600'}`}>
-                        {DONG_INFO_ALL[dong].competitors > 30 ? '높음 (과밀)' : DONG_INFO_ALL[dong].competitors > 20 ? '보통' : '낮음 (기회)'}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">배달 수요</span>
-                      <span className="font-bold text-brand-600">
-                        {DONG_INFO_ALL[dong].avgRent < 250 ? '높음' : '보통'}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">추천도</span>
-                      <span className={`font-bold ${DONG_INFO_ALL[dong].competitors < 25 ? 'text-green-600' : 'text-yellow-600'}`}>
-                        {DONG_INFO_ALL[dong].competitors < 25 ? '추천' : '검토 필요'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 주의사항 */}
-                {DONG_INFO_ALL[dong].competitors > 30 && (
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
-                    <div className="flex items-start gap-2">
-                      <AlertTriangle size={18} className="text-yellow-600 shrink-0 mt-0.5" />
-                      <div>
-                        <p className="font-bold text-sm text-yellow-800">경쟁 과밀 지역</p>
-                        <p className="text-xs text-yellow-700 mt-1">
-                          해당 지역은 동종 업종이 많습니다. 차별화 전략이 필요하며, PM과 상세 상담을 권장합니다.
-                        </p>
+                    <h3 className="font-bold text-sm mb-3 flex items-center gap-2">
+                      <Eye size={16} className="text-brand-600" />
+                      {BUSINESS_CATEGORIES.find(c => c.id === businessCategory)?.label} 경쟁 분석
+                    </h3>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600">경쟁 강도</span>
+                        <span className={`font-bold ${md.competitors > 30 ? 'text-red-600' : md.competitors > 20 ? 'text-yellow-600' : 'text-green-600'}`}>
+                          {md.competitors > 30 ? '높음 (과밀)' : md.competitors > 20 ? '보통' : '낮음 (기회)'}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600">{categoryMetric.label}</span>
+                        <span className={`font-bold ${metricResult.color}`}>
+                          {metricResult.value}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600">추천도</span>
+                        <span className={`font-bold ${md.competitors < 25 ? 'text-green-600' : 'text-yellow-600'}`}>
+                          {md.competitors < 25 ? '추천' : '검토 필요'}
+                        </span>
                       </div>
                     </div>
+                    {metricResult.detail && (
+                      <p className="text-xs text-gray-400 mt-2">{categoryMetric.description}: {metricResult.detail}</p>
+                    )}
                   </div>
-                )}
-              </>
-            )}
+
+                  {/* 연령대별 유동인구 차트 (API 데이터가 있을 때) */}
+                  {marketData?.population && marketData.population.total > 0 && (() => {
+                    const pop = marketData.population!;
+                    const total = pop.total || 1;
+                    const ageData = [
+                      { label: '10대', value: pop.age10, color: 'bg-sky-400' },
+                      { label: '20대', value: pop.age20, color: 'bg-blue-500' },
+                      { label: '30대', value: pop.age30, color: 'bg-indigo-500' },
+                      { label: '40대', value: pop.age40, color: 'bg-purple-500' },
+                      { label: '50대', value: pop.age50, color: 'bg-pink-500' },
+                      { label: '60+', value: pop.age60plus, color: 'bg-rose-400' },
+                    ];
+                    const maxVal = Math.max(...ageData.map(d => d.value));
+                    return (
+                      <div className="bg-white rounded-xl border p-4">
+                        <h3 className="font-bold text-sm mb-3 flex items-center gap-2">
+                          <Users size={16} className="text-brand-600" />
+                          연령대별 유동인구
+                        </h3>
+                        <div className="space-y-2">
+                          {ageData.map(age => (
+                            <div key={age.label} className="flex items-center gap-2">
+                              <span className="text-xs text-gray-500 w-8 shrink-0">{age.label}</span>
+                              <div className="flex-1 bg-gray-100 rounded-full h-5 overflow-hidden">
+                                <div
+                                  className={`h-full ${age.color} rounded-full transition-all duration-500`}
+                                  style={{ width: `${maxVal > 0 ? (age.value / maxVal) * 100 : 0}%` }}
+                                />
+                              </div>
+                              <span className="text-xs font-bold text-gray-700 w-10 text-right">
+                                {Math.round((age.value / total) * 100)}%
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="flex items-center justify-between mt-3 pt-2 border-t text-xs text-gray-400">
+                          <span>남성 {Math.round((pop.male / total) * 100)}% / 여성 {Math.round((pop.female / total) * 100)}%</span>
+                          <span>주간 {Math.round((pop.daytime / total) * 100)}% / 야간 {Math.round((pop.nighttime / total) * 100)}%</span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* 주의사항 */}
+                  {md.competitors > 30 && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                      <div className="flex items-start gap-2">
+                        <AlertTriangle size={18} className="text-yellow-600 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-bold text-sm text-yellow-800">경쟁 과밀 지역</p>
+                          <p className="text-xs text-yellow-700 mt-1">
+                            해당 지역은 동종 업종이 많습니다. 차별화 전략이 필요하며, PM과 상세 상담을 권장합니다.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </div>
         )}
 
@@ -1978,8 +2088,8 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
                     region: `서울시 ${selectedGu} ${dong}`,
                     analysis: [
                       { label: '주요 타겟', value: '20-30대 직장인/주거' },
-                      { label: '유동 인구', value: DONG_INFO_ALL[dong]?.footTraffic || '정보 없음' },
-                      { label: '경쟁 점포', value: `${DONG_INFO_ALL[dong]?.competitors || 0}개 (반경 500m)` },
+                      { label: '유동 인구', value: marketData?.footTraffic || DONG_INFO_ALL[dong]?.footTraffic || '정보 없음' },
+                      { label: '경쟁 점포', value: `${marketData?.competitors ?? DONG_INFO_ALL[dong]?.competitors ?? 0}개 (반경 500m)` },
                     ],
                   },
                   costBreakdown: [
