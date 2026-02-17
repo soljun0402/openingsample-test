@@ -1,11 +1,15 @@
 // 서울 열린데이터 API 연동 유틸리티
 // API: 유동인구(OA-15568), 점포수(OA-15577), 추정매출(OA-15572)
 // Vite 프록시 경로: /api/seoul → openapi.seoul.go.kr:8088
+//
+// 주의: 점포수(2M+건), 매출(577K+건)은 업종×상권 조합이라
+// 전수 조회가 비현실적 → 유동인구만 API 사용, 나머지는 fallback
 
 import { DONG_INFO_ALL } from '../data/seoulDistricts';
 
 const SEOUL_API_KEY = import.meta.env.VITE_SEOUL_DATA_KEY || '';
 const CACHE_TTL = 30 * 60 * 1000; // 30분
+const API_MAX_ROWS = 1000; // 서울 API 1회 최대 요청 건수
 
 export interface MarketAnalysisData {
   footTraffic: string;
@@ -77,98 +81,86 @@ async function fetchSeoulApi(serviceName: string, startIdx: number, endIdx: numb
   return res.json();
 }
 
+// --- 전체 건수 조회 (1건만 가져와서 list_total_count 확인) ---
+async function getTotalCount(serviceName: string): Promise<number> {
+  const data = await fetchSeoulApi(serviceName, 1, 1);
+  const serviceData = data?.[serviceName];
+  return serviceData?.list_total_count || 0;
+}
+
+// --- 최신 분기 데이터 가져오기 (끝에서부터 조회) ---
+async function fetchLatestQuarterRows(serviceName: string): Promise<any[]> {
+  const total = await getTotalCount(serviceName);
+  if (total === 0) return [];
+
+  // 최신 분기는 데이터 끝에 위치. 분기당 ~1,000~1,100건이므로
+  // 끝에서 1,000건을 가져오면 최신 분기 데이터를 거의 포함
+  const startIdx = Math.max(1, total - API_MAX_ROWS + 1);
+  const endIdx = total;
+
+  const data = await fetchSeoulApi(serviceName, startIdx, endIdx);
+  const rows = data?.[serviceName]?.row;
+  if (!rows || !Array.isArray(rows)) return [];
+
+  // 최신 분기 코드만 필터링 (가장 큰 STDR_YYQU_CD)
+  const latestQuarter = rows.reduce((max: string, row: any) => {
+    const q = row.STDR_YYQU_CD || '';
+    return q > max ? q : max;
+  }, '');
+
+  return rows.filter((row: any) => row.STDR_YYQU_CD === latestQuarter);
+}
+
 // --- 동 이름으로 상권 코드 매칭 ---
-// 서울 열린데이터의 상권명에서 동명을 부분 문자열 검색
+// TRDAR_CD_NM(상권명)은 "역삼역", "강남역" 등이므로
+// 동명에서 "동" 접미사를 제거하고 부분 문자열 매칭
 function findMatchingRows(rows: any[], dong: string): any[] {
   if (!rows || !Array.isArray(rows)) return [];
+  const dongBase = dong.replace(/동$/, '');
   return rows.filter((row: any) => {
-    const name = row.TRDAR_CD_NM || row.SIGNGU_CD_NM || '';
-    return name.includes(dong) || name.includes(dong.replace(/동$/, ''));
+    const name = row.TRDAR_CD_NM || '';
+    return name.includes(dong) || name.includes(dongBase);
   });
 }
 
 // --- 유동인구 데이터 가져오기 (OA-15568) ---
+// 전체 ~44K건, 분기당 ~1,000건 → 최신 분기만 조회
 async function fetchPopulation(dong: string): Promise<MarketAnalysisData['population'] | null> {
   try {
-    const data = await fetchSeoulApi('VwsmTrdarFlpopQq', 1, 100);
-    const result = data?.VwsmTrdarFlpopQq?.row;
-    if (!result) return null;
+    const rows = await fetchLatestQuarterRows('VwsmTrdarFlpopQq');
+    if (rows.length === 0) return null;
 
-    const matches = findMatchingRows(result, dong);
+    const matches = findMatchingRows(rows, dong);
     if (matches.length === 0) return null;
 
-    // 최신 분기 데이터 사용 (마지막 row)
-    const latest = matches[matches.length - 1];
+    // 매칭된 상권들의 유동인구를 합산 (동 하나에 여러 상권이 있을 수 있음)
+    let total = 0, male = 0, female = 0;
+    let age10 = 0, age20 = 0, age30 = 0, age40 = 0, age50 = 0, age60plus = 0;
+    let daytime = 0, nighttime = 0;
 
-    const total = Number(latest.TOT_FLPOP_CO || 0);
-    const male = Number(latest.ML_FLPOP_CO || 0);
-    const female = Number(latest.FML_FLPOP_CO || 0);
-    const age10 = Number(latest.AGRDE_10_FLPOP_CO || 0);
-    const age20 = Number(latest.AGRDE_20_FLPOP_CO || 0);
-    const age30 = Number(latest.AGRDE_30_FLPOP_CO || 0);
-    const age40 = Number(latest.AGRDE_40_FLPOP_CO || 0);
-    const age50 = Number(latest.AGRDE_50_FLPOP_CO || 0);
-    const age60plus = Number(latest.AGRDE_60_ABOVE_FLPOP_CO || 0);
+    for (const row of matches) {
+      total += Number(row.TOT_FLPOP_CO || 0);
+      male += Number(row.ML_FLPOP_CO || 0);
+      female += Number(row.FML_FLPOP_CO || 0);
+      age10 += Number(row.AGRDE_10_FLPOP_CO || 0);
+      age20 += Number(row.AGRDE_20_FLPOP_CO || 0);
+      age30 += Number(row.AGRDE_30_FLPOP_CO || 0);
+      age40 += Number(row.AGRDE_40_FLPOP_CO || 0);
+      age50 += Number(row.AGRDE_50_FLPOP_CO || 0);
+      age60plus += Number(row.AGRDE_60_ABOVE_FLPOP_CO || 0);
 
-    // 시간대별 유동인구로 주간/야간 추정
-    const tmSlots = [
-      Number(latest.TMZON_1_FLPOP_CO || 0),  // 00~06
-      Number(latest.TMZON_2_FLPOP_CO || 0),  // 06~11
-      Number(latest.TMZON_3_FLPOP_CO || 0),  // 11~14
-      Number(latest.TMZON_4_FLPOP_CO || 0),  // 14~17
-      Number(latest.TMZON_5_FLPOP_CO || 0),  // 17~21
-      Number(latest.TMZON_6_FLPOP_CO || 0),  // 21~24
-    ];
-    const daytime = tmSlots[1] + tmSlots[2] + tmSlots[3]; // 06~17
-    const nighttime = tmSlots[0] + tmSlots[4] + tmSlots[5]; // 17~06
+      // 시간대별: 06~11, 11~14, 14~17 = 주간 / 00~06, 17~21, 21~24 = 야간
+      daytime += Number(row.TMZON_06_11_FLPOP_CO || 0)
+        + Number(row.TMZON_11_14_FLPOP_CO || 0)
+        + Number(row.TMZON_14_17_FLPOP_CO || 0);
+      nighttime += Number(row.TMZON_00_06_FLPOP_CO || 0)
+        + Number(row.TMZON_17_21_FLPOP_CO || 0)
+        + Number(row.TMZON_21_24_FLPOP_CO || 0);
+    }
 
     return { total, male, female, age10, age20, age30, age40, age50, age60plus, nighttime, daytime };
   } catch (e) {
     console.warn('유동인구 API 실패:', e);
-    return null;
-  }
-}
-
-// --- 점포수 데이터 가져오기 (OA-15577) ---
-async function fetchStores(dong: string): Promise<MarketAnalysisData['stores'] | null> {
-  try {
-    const data = await fetchSeoulApi('VwsmTrdarStorQq', 1, 100);
-    const result = data?.VwsmTrdarStorQq?.row;
-    if (!result) return null;
-
-    const matches = findMatchingRows(result, dong);
-    if (matches.length === 0) return null;
-
-    const latest = matches[matches.length - 1];
-    return {
-      total: Number(latest.STOR_CO || 0),
-      openRate: Number(latest.OPBIZ_RT || 0),
-      closeRate: Number(latest.CLSBIZ_RT || 0),
-      similarCount: Number(latest.SIMILR_INDUTY_STOR_CO || 0),
-    };
-  } catch (e) {
-    console.warn('점포수 API 실패:', e);
-    return null;
-  }
-}
-
-// --- 추정매출 데이터 가져오기 (OA-15572) ---
-async function fetchSales(dong: string): Promise<MarketAnalysisData['sales'] | null> {
-  try {
-    const data = await fetchSeoulApi('VwsmTrdarSelngQq', 1, 100);
-    const result = data?.VwsmTrdarSelngQq?.row;
-    if (!result) return null;
-
-    const matches = findMatchingRows(result, dong);
-    if (matches.length === 0) return null;
-
-    const latest = matches[matches.length - 1];
-    return {
-      monthlyAmount: Number(latest.THSMON_SELNG_AMT || 0),
-      monthlyCount: Number(latest.THSMON_SELNG_CO || 0),
-    };
-  } catch (e) {
-    console.warn('매출 API 실패:', e);
     return null;
   }
 }
@@ -213,36 +205,30 @@ export async function getMarketAnalysis(dong: string): Promise<MarketAnalysisDat
     return fallback;
   }
 
-  // 3. API 병렬 호출
+  // 3. 유동인구 API 호출 (점포수/매출은 데이터 규모상 fallback 사용)
   try {
-    const [population, stores, sales] = await Promise.all([
-      fetchPopulation(dong),
-      fetchStores(dong),
-      fetchSales(dong),
-    ]);
+    const population = await fetchPopulation(dong);
 
-    // API에서 아무 데이터도 못 가져오면 fallback
-    if (!population && !stores && !sales) {
+    // fallback 기본값 가져오기
+    const fallbackInfo = DONG_INFO_ALL[dong];
+
+    if (!population) {
       const fallback = createFallbackData(dong);
       setCache(dong, fallback);
       return fallback;
     }
 
-    // fallback 기본값 가져오기
-    const fallbackInfo = DONG_INFO_ALL[dong];
-    const footTrafficRaw = population?.total || 0;
+    const footTrafficRaw = population.total;
 
     const result: MarketAnalysisData = {
       footTraffic: footTrafficRaw > 0
         ? `일 평균 ${Math.round(footTrafficRaw / 90).toLocaleString()}명`
         : fallbackInfo?.footTraffic || '정보 없음',
       footTrafficRaw: footTrafficRaw > 0 ? Math.round(footTrafficRaw / 90) : 0,
-      competitors: stores?.total || fallbackInfo?.competitors || 0,
+      competitors: fallbackInfo?.competitors || 0,
       avgRent: fallbackInfo?.avgRent || 0,
       description: fallbackInfo?.description || '',
-      population: population || undefined,
-      stores: stores || undefined,
-      sales: sales || undefined,
+      population: population,
       source: 'api',
     };
 
