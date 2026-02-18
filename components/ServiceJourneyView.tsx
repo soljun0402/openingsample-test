@@ -1997,6 +1997,91 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
               <p className="text-sm text-brand-100">보증금, 권리금, 시설비 포함</p>
             </div>
 
+            {/* AI 견적서 다운로드 - 눈에 띄게 상단 배치 */}
+            <button
+              disabled={aiReportLoading}
+              onClick={async () => {
+                const storeSizeNum = typeof storeSize === 'number' ? storeSize : 17;
+                const categoryLabel = BUSINESS_CATEGORIES.find(c => c.id === businessCategory)?.label || '매장';
+
+                const data: EstimatePDFProps = {
+                  customerName: '예비 창업자',
+                  totalCostRange: {
+                    min: estimatedCosts.min * 10000,
+                    max: estimatedCosts.max * 10000,
+                  },
+                  locationData: {
+                    region: `서울시 ${selectedGu} ${dong}`,
+                    analysis: [
+                      { label: '주요 타겟', value: '20-30대 직장인/주거' },
+                      { label: '유동 인구', value: marketData?.footTraffic || DONG_INFO_ALL[dong]?.footTraffic || '정보 없음' },
+                      { label: '경쟁 점포', value: `${marketData?.competitors ?? DONG_INFO_ALL[dong]?.competitors ?? 0}개 (반경 500m)` },
+                    ],
+                  },
+                  costBreakdown: [
+                    { label: '보증금 및 권리금', min: storeSizeNum * 300 * 10000, max: storeSizeNum * 800 * 10000 },
+                    ...checklist.filter(i => i.estimatedCost.max > 0).map(item => {
+                      const isPerPyung = item.estimatedCost.unit.includes('평당');
+                      const multiplier = isPerPyung ? storeSizeNum : 1;
+                      return {
+                        label: item.title,
+                        min: item.estimatedCost.min * multiplier * 10000,
+                        max: item.estimatedCost.max * multiplier * 10000,
+                      };
+                    }),
+                  ],
+                  checklist: {
+                    readyCount: checklist.filter(i => i.status === 'done').length,
+                    worryCount: checklist.filter(i => i.status === 'worry').length,
+                    worryItems: checklist.filter(i => i.status === 'worry').map(i => i.title),
+                    readyItems: checklist.filter(i => i.status === 'done').map(i => i.title),
+                  },
+                  projectName: `${dong} ${categoryLabel} 창업`,
+                };
+
+                setAiReportLoading(true);
+                setEstimateResult(data);
+
+                try {
+                  const reportInput = buildReportInput({
+                    businessCategory,
+                    businessCategoryLabel: categoryLabel,
+                    selectedGu,
+                    dong,
+                    storeSize,
+                    marketData,
+                    estimatedCosts,
+                    checklist,
+                  });
+                  console.log('[AI Report] Gemini API 호출 시작...');
+                  const aiReport = await generateAIReport(reportInput);
+                  if (aiReport) {
+                    console.log('[AI Report] 성공 - 준비도:', aiReport.summary.overallScore, '상권등급:', aiReport.locationAnalysis.grade);
+                    console.log('[AI Report] 전체 응답:', aiReport);
+                  } else {
+                    console.warn('[AI Report] AI 응답 없음 → 기존 정적 PDF로 폴백');
+                  }
+                  setEstimateResult({ ...data, aiReport: aiReport ?? undefined });
+                } catch (err) {
+                  console.error('[AI Report] 생성 실패:', err);
+                } finally {
+                  setAiReportLoading(false);
+                }
+              }}
+              className="w-full bg-gradient-to-r from-brand-500 to-brand-600 rounded-xl p-4 flex items-center justify-between hover:from-brand-600 hover:to-brand-700 transition-all shadow-lg disabled:opacity-60"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                  {aiReportLoading ? <Loader2 size={20} className="text-white animate-spin" /> : <FileText size={20} className="text-white" />}
+                </div>
+                <div className="text-left">
+                  <p className="font-bold text-sm text-white">{aiReportLoading ? 'AI 분석 중...' : 'AI 견적서 받기'}</p>
+                  <p className="text-xs text-white/70">{aiReportLoading ? 'AI가 맞춤형 보고서를 생성하고 있습니다' : 'AI가 분석한 맞춤형 창업 리포트 PDF'}</p>
+                </div>
+              </div>
+              {aiReportLoading ? <Loader2 size={20} className="text-white/60 animate-spin" /> : <ChevronRight size={20} className="text-white/60" />}
+            </button>
+
             {/* 비용 상세 */}
             <div className="bg-white rounded-xl border overflow-hidden">
               <div className="bg-gray-50 px-4 py-2 border-b">
@@ -2076,87 +2161,6 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
               </div>
             </div>
 
-            {/* 견적서 다운로드 */}
-            <button
-              disabled={aiReportLoading}
-              onClick={async () => {
-                const storeSizeNum = typeof storeSize === 'number' ? storeSize : 17;
-                const categoryLabel = BUSINESS_CATEGORIES.find(c => c.id === businessCategory)?.label || '매장';
-
-                // 기존 PDF 데이터 구성
-                const data: EstimatePDFProps = {
-                  customerName: '예비 창업자',
-                  totalCostRange: {
-                    min: estimatedCosts.min * 10000,
-                    max: estimatedCosts.max * 10000,
-                  },
-                  locationData: {
-                    region: `서울시 ${selectedGu} ${dong}`,
-                    analysis: [
-                      { label: '주요 타겟', value: '20-30대 직장인/주거' },
-                      { label: '유동 인구', value: marketData?.footTraffic || DONG_INFO_ALL[dong]?.footTraffic || '정보 없음' },
-                      { label: '경쟁 점포', value: `${marketData?.competitors ?? DONG_INFO_ALL[dong]?.competitors ?? 0}개 (반경 500m)` },
-                    ],
-                  },
-                  costBreakdown: [
-                    { label: '보증금 및 권리금', min: storeSizeNum * 300 * 10000, max: storeSizeNum * 800 * 10000 },
-                    ...checklist.filter(i => i.estimatedCost.max > 0).map(item => {
-                      const isPerPyung = item.estimatedCost.unit.includes('평당');
-                      const multiplier = isPerPyung ? storeSizeNum : 1;
-                      return {
-                        label: item.title,
-                        min: item.estimatedCost.min * multiplier * 10000,
-                        max: item.estimatedCost.max * multiplier * 10000,
-                      };
-                    }),
-                  ],
-                  checklist: {
-                    readyCount: checklist.filter(i => i.status === 'done').length,
-                    worryCount: checklist.filter(i => i.status === 'worry').length,
-                    worryItems: checklist.filter(i => i.status === 'worry').map(i => i.title),
-                    readyItems: checklist.filter(i => i.status === 'done').map(i => i.title),
-                  },
-                  projectName: `${dong} ${categoryLabel} 창업`,
-                };
-
-                // AI 보고서 생성 (비동기, 실패 시 null → 기존 PDF로 폴백)
-                setAiReportLoading(true);
-                setEstimateResult(data);
-
-                try {
-                  const reportInput = buildReportInput({
-                    businessCategory,
-                    businessCategoryLabel: categoryLabel,
-                    selectedGu,
-                    dong,
-                    storeSize,
-                    marketData,
-                    estimatedCosts,
-                    checklist,
-                  });
-                  const aiReport = await generateAIReport(reportInput);
-                  setEstimateResult({ ...data, aiReport: aiReport ?? undefined });
-                } catch (err) {
-                  console.error('AI 보고서 생성 중 오류:', err);
-                  // aiReport 없이 기존 PDF 유지
-                } finally {
-                  setAiReportLoading(false);
-                }
-              }}
-              className="w-full bg-white border-2 border-brand-200 rounded-xl p-4 flex items-center justify-between hover:bg-brand-50 transition-colors disabled:opacity-50"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center">
-                  {aiReportLoading ? <Loader2 size={20} className="text-brand-600 animate-spin" /> : <FileText size={20} className="text-brand-600" />}
-                </div>
-                <div className="text-left">
-                  <p className="font-bold text-sm text-gray-900">{aiReportLoading ? 'AI 분석 중...' : '견적서 다운로드'}</p>
-                  <p className="text-xs text-gray-500">{aiReportLoading ? 'AI가 맞춤형 보고서를 생성하고 있습니다' : 'PDF로 상세 견적 리포트를 받아보세요'}</p>
-                </div>
-              </div>
-              {aiReportLoading ? <Loader2 size={20} className="text-brand-400 animate-spin" /> : <ChevronRight size={20} className="text-gray-400" />}
-            </button>
-
             {/* PM에게 전할 메시지 */}
             <div className="bg-white rounded-xl border p-4">
               <h3 className="font-bold text-sm text-gray-700 mb-2">💬 PM에게 전할 말이 있나요?</h3>
@@ -2226,6 +2230,7 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
         <EstimateResultView
           data={estimateResult}
           onBack={() => setEstimateResult(null)}
+          aiLoading={aiReportLoading}
         />
       )}
 
