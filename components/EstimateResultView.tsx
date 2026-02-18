@@ -458,16 +458,24 @@ export const EstimateResultView: React.FC<EstimateResultViewProps> = ({ data, on
 
                     {/* Download Button */}
                     <div className="pb-8 pt-2">
-                        <PDFDownloadLink
-                            document={<EstimatePDFDocument {...data} />}
-                            fileName={`opening_estimate_${new Date().toISOString().slice(0, 10)}.pdf`}
-                            className="w-full block"
-                        >
-                            <button className="w-full h-14 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-2xl font-bold text-[15px] flex items-center justify-center gap-2 shadow-lg shadow-blue-500/25 transition-all active:scale-[0.98]">
-                                <Download size={20} />
-                                {hasAI ? 'AI 분석 리포트 다운로드' : '상세 견적 리포트 다운로드'}
+                        {!aiLoading ? (
+                            <PDFDownloadLink
+                                key={hasAI ? 'ai' : 'static'}
+                                document={<EstimatePDFDocument {...data} />}
+                                fileName={`opening_estimate_${new Date().toISOString().slice(0, 10)}.pdf`}
+                                className="w-full block"
+                            >
+                                <button className="w-full h-14 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-2xl font-bold text-[15px] flex items-center justify-center gap-2 shadow-lg shadow-blue-500/25 transition-all active:scale-[0.98]">
+                                    <Download size={20} />
+                                    {hasAI ? 'AI 분석 리포트 다운로드' : '상세 견적 리포트 다운로드'}
+                                </button>
+                            </PDFDownloadLink>
+                        ) : (
+                            <button disabled className="w-full h-14 bg-slate-300 text-white rounded-2xl font-bold text-[15px] flex items-center justify-center gap-2 cursor-not-allowed">
+                                <Loader2 size={20} className="animate-spin" />
+                                AI 분석 중...
                             </button>
-                        </PDFDownloadLink>
+                        )}
                         <p className="text-center text-xs text-slate-400 mt-3">
                             {hasAI ? 'AI 분석 포함 7페이지 PDF' : 'PDF 파일로 저장되어 언제든 다시 볼 수 있습니다'}
                         </p>
