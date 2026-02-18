@@ -2075,6 +2075,7 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
                     readyItems: checklist.filter(i => i.status === 'done').map(i => i.title),
                   },
                   projectName: `${dong} ${categoryLabel} 창업`,
+                  checklistTitles: Object.fromEntries(checklist.map(i => [i.id, i.title])),
                 };
 
                 setAiReportLoading(true);

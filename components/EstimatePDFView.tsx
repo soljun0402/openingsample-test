@@ -25,322 +25,65 @@ Font.register({
     ],
 });
 
-// Define styles
-const styles = StyleSheet.create({
-    page: {
-        padding: 40,
-        backgroundColor: '#FFFFFF',
-        fontFamily: 'Noto Sans KR',
-    },
-    pageDetails: {
-        padding: 40,
-        paddingBottom: 60,
-        backgroundColor: '#FFFFFF',
-        fontFamily: 'Noto Sans KR',
-    },
-    pageChecklist: {
-        padding: 40,
-        paddingBottom: 150, // More space for CTA overlap
-        backgroundColor: '#FFFFFF',
-        fontFamily: 'Noto Sans KR',
-    },
+// ─── Colors ───
+const BRAND = '#1E6FFF';
+const BRAND_LIGHT = '#F0F6FF';
+const BRAND_BORDER = '#E5EDFF';
+const GREEN = '#34C759';
+const ORANGE = '#FF9500';
+const RED = '#FF3B30';
+const PURPLE = '#6C3CE9';
+
+// ─── Styles ───
+const s = StyleSheet.create({
+    page: { padding: 40, paddingBottom: 60, backgroundColor: '#FFFFFF', fontFamily: 'Noto Sans KR' },
     // Typography
-    serifTitle: {
-        fontFamily: 'Noto Sans KR',
-        fontSize: 42,
-        fontWeight: 'bold',
-        marginBottom: 10,
-        color: '#000000',
-    },
-    sectionTitle: {
-        fontFamily: 'Noto Sans KR',
-        fontSize: 14,
-        fontWeight: 'bold',
-        marginBottom: 10,
-        textTransform: 'uppercase',
-        letterSpacing: 1.5,
-        borderBottomWidth: 1,
-        borderBottomColor: '#000000',
-        paddingBottom: 5,
-    },
-    brandText: {
-        color: '#1E6FFF',
-    },
-    // Hero Section
-    heroSection: {
-        marginTop: 40,
-        marginBottom: 60,
-    },
-    heroQuote: {
-        fontFamily: 'Noto Sans KR',
-        fontSize: 24,
-        fontStyle: 'normal',
-        marginBottom: 20,
-        lineHeight: 1.4,
-        color: '#333333',
-    },
-    costRange: {
-        fontFamily: 'Noto Sans KR',
-        fontWeight: 'bold',
-        fontSize: 32,
-        color: '#1E6FFF',
-        marginBottom: 5,
-    },
-    costLabel: {
-        fontSize: 12,
-        color: '#666666',
-        textTransform: 'uppercase',
-    },
-    // Grid Layout
-    gridContainer: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: 20,
-    },
-    gridItem: {
-        width: '30%',
-        marginBottom: 20,
-    },
-    gridLabel: {
-        fontSize: 10,
-        color: '#888888',
-        marginBottom: 4,
-        textTransform: 'uppercase',
-    },
-    gridValue: {
-        fontSize: 14,
-        fontFamily: 'Noto Sans KR',
-        color: '#000000',
-    },
+    mainTitle: { fontSize: 36, fontWeight: 'bold', color: '#000', marginBottom: 4 },
+    pageTitle: { fontSize: 22, fontWeight: 'bold', color: '#000', marginBottom: 4 },
+    subtitle: { fontSize: 10, color: '#888', marginBottom: 16 },
+    sectionHeader: { fontSize: 12, fontWeight: 'bold', color: BRAND, marginBottom: 6, marginTop: 14, paddingBottom: 3, borderBottomWidth: 1, borderBottomColor: BRAND_BORDER },
+    sectionHeaderDark: { fontSize: 12, fontWeight: 'bold', color: '#000', marginBottom: 6, marginTop: 14, paddingBottom: 3, borderBottomWidth: 1, borderBottomColor: '#E0E0E0' },
+    body: { fontSize: 9.5, color: '#333', lineHeight: 1.6 },
+    small: { fontSize: 8.5, color: '#666', lineHeight: 1.5 },
+    bold: { fontSize: 9.5, fontWeight: 'bold', color: '#000' },
+    label: { fontSize: 8, color: '#888', marginBottom: 2, textTransform: 'uppercase', letterSpacing: 0.8 },
+    // Layout
+    row: { flexDirection: 'row' },
+    col: { flex: 1 },
+    card: { padding: 10, backgroundColor: '#F9FAFB', borderRadius: 4, marginBottom: 8 },
+    cardBlue: { padding: 10, backgroundColor: BRAND_LIGHT, borderRadius: 4, marginBottom: 8 },
+    divider: { borderBottomWidth: 1, borderBottomColor: '#F0F0F0', marginVertical: 6 },
     // Table
-    tableRow: {
-        flexDirection: 'row',
-        borderBottomWidth: 1,
-        borderBottomColor: '#EEEEEE',
-        paddingVertical: 8,
-        alignItems: 'center',
-    },
-    tableLabel: {
-        flex: 2,
-        fontSize: 12,
-        fontFamily: 'Noto Sans KR',
-    },
-    tableValue: {
-        flex: 1,
-        fontSize: 12,
-        textAlign: 'right',
-        fontFamily: 'Noto Sans KR',
-        fontWeight: 'bold',
-    },
+    tableRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#EEE', paddingVertical: 6, alignItems: 'center' },
+    tableLabel: { flex: 2, fontSize: 10 },
+    tableValue: { flex: 1, fontSize: 10, textAlign: 'right', fontWeight: 'bold' },
+    // Bullets
+    bulletRow: { flexDirection: 'row', marginBottom: 3, paddingLeft: 2 },
+    bulletDot: { fontSize: 9.5, color: BRAND, marginRight: 5, width: 8 },
     // Checklist
-    checklistContainer: {
-        flexDirection: 'row',
-        marginTop: 20,
-    },
-    checklistCol: {
-        width: '48%',
-        marginRight: '2%',
-    },
-    checkItem: {
-        flexDirection: 'row',
-        marginBottom: 8,
-        alignItems: 'center',
-    },
-    checkIcon: {
-        width: 12,
-        height: 12,
-        marginRight: 8,
-        borderRadius: 6,
-    },
-    checkText: {
-        fontSize: 11,
-        color: '#444444',
-    },
+    checkDot: { width: 8, height: 8, borderRadius: 4, marginRight: 6 },
+    // Risk
+    riskCard: { padding: 8, marginBottom: 6, borderRadius: 4, borderLeftWidth: 3 },
+    // Phase
+    phaseRow: { flexDirection: 'row', marginBottom: 8, paddingBottom: 6, borderBottomWidth: 1, borderBottomColor: '#F0F0F0' },
+    phaseBadge: { width: 56, marginRight: 8 },
     // Footer
-    footer: {
-        position: 'absolute',
-        bottom: 40,
-        left: 40,
-        right: 40,
-        borderTopWidth: 1,
-        borderTopColor: '#EEEEEE',
-        paddingTop: 20,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-    },
-    footerText: {
-        fontSize: 10,
-        color: '#999999',
-    },
-    ctaBox: {
-        backgroundColor: '#F5F5F7',
-        padding: 20,
-        borderRadius: 4,
-        marginTop: 40,
-    },
-    ctaTitle: {
-        fontSize: 14,
-        fontFamily: 'Noto Sans KR',
-        fontWeight: 'bold',
-        color: '#1E6FFF',
-        marginBottom: 8,
-    },
-    ctaText: {
-        fontSize: 11,
-        color: '#333333',
-        lineHeight: 1.4,
-    },
-    // ─── AI Report Styles ───
-    aiPageTitle: {
-        fontFamily: 'Noto Sans KR',
-        fontSize: 28,
-        fontWeight: 'bold',
-        color: '#000000',
-        marginBottom: 6,
-    },
-    aiSubtitle: {
-        fontSize: 11,
-        color: '#888888',
-        marginBottom: 24,
-    },
-    aiSectionHeader: {
-        fontFamily: 'Noto Sans KR',
-        fontSize: 13,
-        fontWeight: 'bold',
-        color: '#1E6FFF',
-        marginBottom: 8,
-        marginTop: 16,
-        paddingBottom: 4,
-        borderBottomWidth: 1,
-        borderBottomColor: '#E5EDFF',
-    },
-    aiBodyText: {
-        fontSize: 10,
-        color: '#333333',
-        lineHeight: 1.6,
-        fontFamily: 'Noto Sans KR',
-    },
-    aiSmallText: {
-        fontSize: 9,
-        color: '#666666',
-        lineHeight: 1.5,
-        fontFamily: 'Noto Sans KR',
-    },
-    aiBoldText: {
-        fontSize: 10,
-        color: '#000000',
-        fontFamily: 'Noto Sans KR',
-        fontWeight: 'bold',
-    },
-    // Score badge
-    scoreContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 16,
-        padding: 12,
-        backgroundColor: '#F0F6FF',
-        borderRadius: 6,
-    },
-    scoreNumber: {
-        fontSize: 36,
-        fontWeight: 'bold',
-        color: '#1E6FFF',
-        fontFamily: 'Noto Sans KR',
-        marginRight: 12,
-    },
-    scoreLabel: {
-        fontSize: 12,
-        color: '#666666',
-        fontFamily: 'Noto Sans KR',
-    },
-    // Grade badge
-    gradeBadge: {
-        width: 32,
-        height: 32,
-        borderRadius: 4,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 10,
-    },
-    gradeText: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#FFFFFF',
-        fontFamily: 'Noto Sans KR',
-    },
-    // Bullet item
-    bulletRow: {
-        flexDirection: 'row',
-        marginBottom: 4,
-        paddingLeft: 4,
-    },
-    bulletDot: {
-        fontSize: 10,
-        color: '#1E6FFF',
-        marginRight: 6,
-        width: 10,
-    },
-    // Risk card
-    riskCard: {
-        padding: 10,
-        marginBottom: 8,
-        borderRadius: 4,
-        borderLeftWidth: 3,
-    },
-    // Phase row
-    phaseRow: {
-        flexDirection: 'row',
-        marginBottom: 10,
-        paddingBottom: 8,
-        borderBottomWidth: 1,
-        borderBottomColor: '#F0F0F0',
-    },
-    phaseBadge: {
-        width: 60,
-        marginRight: 10,
-    },
-    phaseName: {
-        fontSize: 10,
-        fontWeight: 'bold',
-        color: '#1E6FFF',
-        fontFamily: 'Noto Sans KR',
-    },
-    phaseDuration: {
-        fontSize: 9,
-        color: '#888888',
-        fontFamily: 'Noto Sans KR',
-    },
-    // Saving tip row
-    savingTipRow: {
-        flexDirection: 'row',
-        marginBottom: 8,
-        padding: 8,
-        backgroundColor: '#F9FAFB',
-        borderRadius: 4,
-    },
+    footer: { position: 'absolute', bottom: 30, left: 40, right: 40, borderTopWidth: 1, borderTopColor: '#EEE', paddingTop: 10, flexDirection: 'row', justifyContent: 'space-between' },
+    footerText: { fontSize: 8, color: '#AAA' },
+    // CTA
+    ctaBox: { backgroundColor: '#F5F5F7', padding: 14, borderRadius: 4, marginTop: 12 },
+    ctaTitle: { fontSize: 11, fontWeight: 'bold', color: BRAND, marginBottom: 4 },
+    ctaText: { fontSize: 9.5, color: '#333', lineHeight: 1.5 },
 });
 
-// Interfaces
-interface CostBreakdownItem {
-    label: string;
-    min: number;
-    max: number;
-}
-
-interface ChecklistData {
-    readyCount: number;
-    worryCount: number;
-    worryItems: string[];
-    readyItems: string[];
-}
+// ─── Types ───
+interface CostBreakdownItem { label: string; min: number; max: number; }
+interface ChecklistData { readyCount: number; worryCount: number; worryItems: string[]; readyItems: string[]; }
 
 export interface EstimatePDFProps {
     customerName: string;
     totalCostRange: { min: number; max: number };
-    locationData: {
-        region: string;
-        analysis: { label: string; value: string }[];
-    };
+    locationData: { region: string; analysis: { label: string; value: string }[] };
     costBreakdown: CostBreakdownItem[];
     checklist: ChecklistData;
     projectName?: string;
@@ -349,465 +92,484 @@ export interface EstimatePDFProps {
     marketGrade?: 'S' | 'A' | 'B' | 'C' | 'D';
     simpleScore?: number;
     simpleComment?: string;
+    checklistTitles?: Record<string, string>;
 }
 
-// Helper
-const formatCurrency = (amount: number) => {
-    let safeAmount = amount;
-    if (amount < 500000) {
-        safeAmount = amount * 10000;
+// ─── Helpers ───
+const fmtCost = (amount: number) => {
+    let v = amount;
+    if (amount < 500000) v = amount * 10000;
+    if (v >= 100000000) {
+        const uk = Math.floor(v / 100000000);
+        const rest = Math.floor((v % 100000000) / 10000);
+        return rest > 0 ? `${uk}억 ${new Intl.NumberFormat('ko-KR').format(rest)}만원` : `${uk}억원`;
     }
-
-    if (safeAmount >= 100000000) {
-        const uk = Math.floor(safeAmount / 100000000);
-        const remainder = safeAmount % 100000000;
-        const remainderMan = Math.floor(remainder / 10000);
-
-        return remainderMan > 0
-            ? `${uk}억 ${new Intl.NumberFormat('ko-KR').format(remainderMan)}만원`
-            : `${uk}억원`;
-    }
-    return new Intl.NumberFormat('ko-KR').format(Math.floor(safeAmount / 10000)) + '만원';
+    return new Intl.NumberFormat('ko-KR').format(Math.floor(v / 10000)) + '만원';
 };
 
-const getGradeColor = (grade: string) => {
-    switch (grade) {
-        case 'S': return '#6C3CE9';
-        case 'A': return '#1E6FFF';
-        case 'B': return '#34C759';
-        case 'C': return '#FF9500';
-        case 'D': return '#FF3B30';
-        default: return '#888888';
-    }
+const gradeColor = (g: string) => {
+    const map: Record<string, string> = { S: PURPLE, A: BRAND, B: GREEN, C: ORANGE, D: RED };
+    return map[g] || '#888';
 };
-
-const getRiskColor = (level: string) => {
-    switch (level) {
-        case 'high': return { border: '#FF3B30', bg: '#FFF5F5' };
-        case 'medium': return { border: '#FF9500', bg: '#FFFBF0' };
-        case 'low': return { border: '#34C759', bg: '#F0FFF4' };
-        default: return { border: '#888888', bg: '#F5F5F5' };
-    }
+const riskColor = (level: string) => {
+    const map: Record<string, { border: string; bg: string }> = {
+        high: { border: RED, bg: '#FFF5F5' }, medium: { border: ORANGE, bg: '#FFFBF0' }, low: { border: GREEN, bg: '#F0FFF4' },
+    };
+    return map[level] || { border: '#888', bg: '#F5F5F5' };
 };
+const riskLabel = (level: string) => ({ high: '높음', medium: '보통', low: '낮음' }[level] || level);
 
-const getRiskLabel = (level: string) => {
-    switch (level) {
-        case 'high': return '높음';
-        case 'medium': return '보통';
-        case 'low': return '낮음';
-        default: return level;
-    }
-};
-
-// Component
+// ─── Component ───
 export const EstimatePDFDocument: React.FC<EstimatePDFProps> = ({
-    customerName,
-    totalCostRange,
-    locationData,
-    costBreakdown,
-    checklist,
-    projectName,
-    aiReport
+    customerName, totalCostRange, locationData, costBreakdown, checklist, projectName, aiReport, checklistTitles,
 }) => {
     const hasAI = !!aiReport;
-    const totalPages = hasAI ? 7 : 3;
+    const totalPages = hasAI ? 5 : 3;
 
     return (
     <Document>
-        {/* PAGE 1: Concept & Summary */}
-        <Page size="A4" style={styles.page}>
-            <Text style={styles.serifTitle}>Estimate.</Text>
-            <Text style={{ fontSize: 12, color: '#666666', marginBottom: 40 }}>
-                Prepared for {customerName} | {new Date().toLocaleDateString()}
+        {/* ═══════════════════════════════════════════════════════════
+            PAGE 1: Cover & Executive Summary
+           ═══════════════════════════════════════════════════════════ */}
+        <Page size="A4" style={s.page}>
+            <Text style={s.mainTitle}>OPENING</Text>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#000', marginBottom: 6 }}>Estimate.</Text>
+            <Text style={{ fontSize: 10, color: '#888', marginBottom: 30 }}>
+                Prepared for {customerName} | {new Date().toLocaleDateString('ko-KR')}
             </Text>
 
-            {/* Hero Section */}
-            <View style={styles.heroSection}>
-                <Text style={styles.heroQuote}>
+            {/* Hero: One-liner + Cost */}
+            <View style={{ marginBottom: 24 }}>
+                <Text style={{ fontSize: 16, color: '#333', lineHeight: 1.5, marginBottom: 16 }}>
                     {hasAI ? aiReport.summary.oneLiner : '창업이라는 긴 여정, 오프닝이 가장 든든한 페이스메이커가 되어 드릴게요.'}
                 </Text>
-                <Text style={styles.costRange}>
-                    {formatCurrency(totalCostRange.min)} ~ {formatCurrency(totalCostRange.max)}
+                <Text style={{ fontSize: 28, fontWeight: 'bold', color: BRAND, marginBottom: 3 }}>
+                    {fmtCost(totalCostRange.min)} ~ {fmtCost(totalCostRange.max)}
                 </Text>
-                <Text style={styles.costLabel}>ESTIMATED TOTAL COST RANGE</Text>
+                <Text style={{ fontSize: 9, color: '#888', textTransform: 'uppercase', letterSpacing: 1 }}>Estimated Total Cost Range</Text>
             </View>
 
-            {/* AI Summary Score */}
+            {/* AI: Score + Grade side by side */}
             {hasAI && (
-                <View style={styles.scoreContainer}>
-                    <Text style={styles.scoreNumber}>{aiReport.summary.overallScore}</Text>
-                    <View>
-                        <Text style={styles.aiBoldText}>창업 준비도 점수</Text>
-                        <Text style={styles.scoreLabel}>{aiReport.summary.scoreLabel}</Text>
+                <View style={{ flexDirection: 'row', gap: 10, marginBottom: 16 }}>
+                    <View style={{ flex: 1, padding: 12, backgroundColor: BRAND_LIGHT, borderRadius: 6 }}>
+                        <Text style={{ fontSize: 8, color: '#888', marginBottom: 4 }}>창업 잠재력 점수</Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
+                            <Text style={{ fontSize: 32, fontWeight: 'bold', color: BRAND, marginRight: 6 }}>{aiReport.summary.overallScore}</Text>
+                            <Text style={{ fontSize: 10, color: '#666' }}>/ 100 ({aiReport.summary.scoreLabel})</Text>
+                        </View>
+                    </View>
+                    <View style={{ flex: 1, padding: 12, backgroundColor: BRAND_LIGHT, borderRadius: 6 }}>
+                        <Text style={{ fontSize: 8, color: '#888', marginBottom: 4 }}>상권 등급</Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <View style={{ width: 36, height: 36, borderRadius: 6, backgroundColor: gradeColor(aiReport.locationAnalysis.grade), justifyContent: 'center', alignItems: 'center', marginRight: 8 }}>
+                                <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#FFF' }}>{aiReport.locationAnalysis.grade}</Text>
+                            </View>
+                            <Text style={{ fontSize: 9, color: '#666', flex: 1 }}>{aiReport.locationAnalysis.gradeReason.slice(0, 50)}</Text>
+                        </View>
                     </View>
                 </View>
             )}
 
+            {/* AI: Key Highlights */}
             {hasAI && (
-                <View style={{ marginBottom: 20 }}>
+                <View style={{ marginBottom: 16 }}>
+                    <Text style={{ fontSize: 9, fontWeight: 'bold', color: '#666', marginBottom: 6 }}>KEY HIGHLIGHTS</Text>
                     {aiReport.summary.keyHighlights.map((h, i) => (
-                        <View key={i} style={styles.bulletRow}>
-                            <Text style={styles.bulletDot}>-</Text>
-                            <Text style={styles.aiBodyText}>{h}</Text>
+                        <View key={i} style={s.bulletRow}>
+                            <Text style={s.bulletDot}>-</Text>
+                            <Text style={s.body}>{h}</Text>
                         </View>
                     ))}
                 </View>
             )}
 
-            {/* Technical Data (Market Analysis) */}
-            <Text style={styles.sectionTitle}>Technical Data: Location Analysis</Text>
-            <View style={styles.gridContainer}>
-                <View style={styles.gridItem}>
-                    <Text style={styles.gridLabel}>Region</Text>
-                    <Text style={styles.gridValue}>{locationData.region}</Text>
+            {/* Location Data Grid */}
+            <Text style={s.sectionHeaderDark}>Location Data</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16, marginTop: 4 }}>
+                <View style={{ width: '30%' }}>
+                    <Text style={s.label}>Region</Text>
+                    <Text style={s.bold}>{locationData.region}</Text>
                 </View>
-                {locationData.analysis.map((item, idx) => (
-                    <View key={idx} style={styles.gridItem}>
-                        <Text style={styles.gridLabel}>{item.label}</Text>
-                        <Text style={styles.gridValue}>{item.value}</Text>
+                {locationData.analysis.map((item, i) => (
+                    <View key={i} style={{ width: '30%' }}>
+                        <Text style={s.label}>{item.label}</Text>
+                        <Text style={s.bold}>{item.value}</Text>
                     </View>
                 ))}
-            </View>
-
-            <View style={styles.footer}>
-                <Text style={styles.footerText}>OPENING STARTUP SOLUTION (Rev. Final)</Text>
-                <Text style={styles.footerText}>Page 1 / {totalPages}</Text>
-            </View>
-        </Page>
-
-        {/* PAGE 2: Cost Breakdown */}
-        <Page size="A4" style={styles.pageDetails}>
-            <Text style={styles.serifTitle}>Details.</Text>
-
-            {/* Cost Breakdown */}
-            <View style={{ marginBottom: 40, flex: 1 }}>
-                <Text style={styles.sectionTitle}>Cost Breakdown</Text>
-                {costBreakdown.map((item, idx) => (
-                    <View key={idx} style={styles.tableRow}>
-                        <Text style={styles.tableLabel}>{item.label}</Text>
-                        <Text style={styles.tableValue}>
-                            {formatCurrency(item.min)} ~ {formatCurrency(item.max)}
-                        </Text>
+                {projectName && (
+                    <View style={{ width: '30%' }}>
+                        <Text style={s.label}>Project</Text>
+                        <Text style={s.bold}>{projectName}</Text>
                     </View>
-                ))}
-                <View style={[styles.tableRow, { borderBottomWidth: 0, marginTop: 10 }]}>
-                    <Text style={[styles.tableLabel, { fontFamily: 'Noto Sans KR', fontWeight: 'bold' }]}>Total</Text>
-                    <Text style={[styles.tableValue, { color: '#1E6FFF', fontSize: 14 }]}>
-                        {formatCurrency(totalCostRange.min)} ~ {formatCurrency(totalCostRange.max)}
-                    </Text>
-                </View>
+                )}
             </View>
 
-            <View style={styles.footer}>
-                <Text style={styles.footerText}>OPENING STARTUP SOLUTION (Rev. Final)</Text>
-                <Text style={styles.footerText}>Page 2 / {totalPages}</Text>
-            </View>
-        </Page>
-
-        {/* PAGE 3: Checklist & Action Plan */}
-        <Page size="A4" style={styles.pageChecklist}>
-            <Text style={styles.serifTitle}>Checklist.</Text>
-
-            {/* Checklist Status */}
-            <View style={{ marginBottom: 40, flex: 1 }}>
-                <Text style={styles.sectionTitle}>Preparation Status</Text>
-                <View style={styles.checklistContainer}>
-                    {/* Help Needed Column */}
-                    <View style={styles.checklistCol}>
-                        <Text style={{ fontSize: 12, fontFamily: 'Noto Sans KR', fontWeight: 'bold', marginBottom: 10, color: '#FF9500' }}>
-                            Required Attention ({checklist.worryCount})
-                        </Text>
-                        {checklist.worryItems.map((item, idx) => (
-                            <View key={idx} style={styles.checkItem}>
-                                <View style={[styles.checkIcon, { backgroundColor: '#FF9500' }]} />
-                                <Text style={styles.checkText}>{item}</Text>
-                            </View>
-                        ))}
-                        {checklist.worryCount === 0 && (
-                            <Text style={{ fontSize: 11, color: '#999' }}>- None -</Text>
-                        )}
-                    </View>
-
-                    {/* Ready Column */}
-                    <View style={styles.checklistCol}>
-                        <Text style={{ fontSize: 12, fontFamily: 'Noto Sans KR', fontWeight: 'bold', marginBottom: 10, color: '#34C759' }}>
-                            Ready ({checklist.readyCount})
-                        </Text>
-                        {checklist.readyItems.map((item, idx) => (
-                            <View key={idx} style={styles.checkItem}>
-                                <View style={[styles.checkIcon, { backgroundColor: '#34C759' }]} />
-                                <Text style={styles.checkText}>{item}</Text>
-                            </View>
-                        ))}
-                        {checklist.readyCount === 0 && (
-                            <Text style={{ fontSize: 11, color: '#999' }}>- None -</Text>
-                        )}
-                    </View>
-                </View>
-            </View>
-
-            {/* PM Action Plan (CTA) */}
-            <View style={styles.ctaBox}>
-                <Text style={styles.ctaTitle}>
-                    {checklist.worryCount > 0
-                        ? "맞춤형 솔루션 제안 (Cost Saving Plan)"
-                        : "성공적인 오픈을 위한 최종 점검"}
-                </Text>
-                <Text style={styles.ctaText}>
-                    {checklist.worryCount > 0
-                        ? `${checklist.worryCount}개의 '도움 필요' 항목에 대해 오프닝 전담 매니저가 구체적인 해결책과 비용 절감 방안을 준비했습니다. 내일 오전 중으로 연락드리겠습니다.`
-                        : "대부분의 준비가 완료되셨군요! 놓친 부분이 없는지 전담 매니저가 더블 체크를 도와드리겠습니다."}
-                </Text>
-            </View>
-
-            <View style={styles.footer}>
-                <Text style={styles.footerText}>OPENING STARTUP SOLUTION (Rev. Final)</Text>
-                <Text style={styles.footerText}>Page 3 / {totalPages}</Text>
+            <View style={s.footer}>
+                <Text style={s.footerText}>OPENING STARTUP SOLUTION</Text>
+                <Text style={s.footerText}>Page 1 / {totalPages}</Text>
             </View>
         </Page>
 
         {/* ═══════════════════════════════════════════════════════════
-            AI REPORT PAGES (4~7) — aiReport가 있을 때만 렌더링
+            PAGE 2: Cost Details + AI Cost Analysis
            ═══════════════════════════════════════════════════════════ */}
+        <Page size="A4" style={s.page}>
+            <Text style={s.pageTitle}>Cost Details.</Text>
+            <Text style={s.subtitle}>항목별 예상 비용 및 분석</Text>
 
-        {hasAI && (
-            /* PAGE 4: AI 상권 분석 */
-            <Page size="A4" style={styles.page}>
-                <Text style={styles.aiPageTitle}>AI 상권 분석</Text>
-                <Text style={styles.aiSubtitle}>Opening AI가 분석한 입지 리포트</Text>
-
-                {/* 상권 등급 */}
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
-                    <View style={[styles.gradeBadge, { backgroundColor: getGradeColor(aiReport.locationAnalysis.grade) }]}>
-                        <Text style={styles.gradeText}>{aiReport.locationAnalysis.grade}</Text>
-                    </View>
-                    <View style={{ flex: 1 }}>
-                        <Text style={styles.aiBoldText}>상권 등급: {aiReport.locationAnalysis.grade}등급</Text>
-                        <Text style={styles.aiSmallText}>{aiReport.locationAnalysis.gradeReason}</Text>
-                    </View>
+            {/* Cost Breakdown Table */}
+            <Text style={s.sectionHeaderDark}>Cost Breakdown</Text>
+            {costBreakdown.map((item, i) => (
+                <View key={i} style={s.tableRow}>
+                    <Text style={s.tableLabel}>{item.label}</Text>
+                    <Text style={s.tableValue}>{fmtCost(item.min)} ~ {fmtCost(item.max)}</Text>
                 </View>
+            ))}
+            <View style={[s.tableRow, { borderBottomWidth: 2, borderBottomColor: '#000', marginTop: 4 }]}>
+                <Text style={[s.tableLabel, { fontWeight: 'bold', fontSize: 11 }]}>Total</Text>
+                <Text style={[s.tableValue, { color: BRAND, fontSize: 12 }]}>
+                    {fmtCost(totalCostRange.min)} ~ {fmtCost(totalCostRange.max)}
+                </Text>
+            </View>
 
-                {/* 타겟 고객 & 피크 시간 */}
-                <View style={{ flexDirection: 'row', marginBottom: 16, gap: 12 }}>
-                    <View style={{ flex: 1, padding: 10, backgroundColor: '#F9FAFB', borderRadius: 4 }}>
-                        <Text style={{ fontSize: 9, color: '#888', marginBottom: 4, fontFamily: 'Noto Sans KR' }}>주요 타겟 고객</Text>
-                        <Text style={styles.aiBodyText}>{aiReport.locationAnalysis.targetCustomer}</Text>
-                    </View>
-                    <View style={{ flex: 1, padding: 10, backgroundColor: '#F9FAFB', borderRadius: 4 }}>
-                        <Text style={{ fontSize: 9, color: '#888', marginBottom: 4, fontFamily: 'Noto Sans KR' }}>피크 시간대</Text>
-                        <Text style={styles.aiBodyText}>{aiReport.locationAnalysis.peakHours}</Text>
-                    </View>
-                </View>
+            {/* AI Cost Analysis */}
+            {hasAI && (
+                <View style={{ marginTop: 14 }}>
+                    <Text style={s.sectionHeader}>AI 비용 분석</Text>
+                    <Text style={[s.body, { marginBottom: 10 }]}>{aiReport.costAnalysis.totalComment}</Text>
 
-                {/* 강점 */}
-                <Text style={styles.aiSectionHeader}>강점</Text>
-                {aiReport.locationAnalysis.strengths.map((s, i) => (
-                    <View key={i} style={styles.bulletRow}>
-                        <Text style={[styles.bulletDot, { color: '#34C759' }]}>+</Text>
-                        <Text style={styles.aiBodyText}>{s}</Text>
-                    </View>
-                ))}
-
-                {/* 약점 */}
-                <Text style={styles.aiSectionHeader}>약점</Text>
-                {aiReport.locationAnalysis.weaknesses.map((w, i) => (
-                    <View key={i} style={styles.bulletRow}>
-                        <Text style={[styles.bulletDot, { color: '#FF9500' }]}>-</Text>
-                        <Text style={styles.aiBodyText}>{w}</Text>
-                    </View>
-                ))}
-
-                {/* 주변 상권 활용 팁 */}
-                <View style={[styles.ctaBox, { marginTop: 16 }]}>
-                    <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#1E6FFF', marginBottom: 4, fontFamily: 'Noto Sans KR' }}>주변 상권 활용 팁</Text>
-                    <Text style={styles.aiBodyText}>{aiReport.locationAnalysis.nearbyTip}</Text>
-                </View>
-
-                {/* 비용 분석 미리보기 */}
-                <Text style={[styles.aiSectionHeader, { marginTop: 20 }]}>비용 분석</Text>
-                <Text style={styles.aiBodyText}>{aiReport.costAnalysis.totalComment}</Text>
-
-                {/* 절감 팁 */}
-                {aiReport.costAnalysis.savingTips.map((tip, i) => (
-                    <View key={i} style={styles.savingTipRow}>
-                        <View style={{ width: 60, marginRight: 8 }}>
-                            <Text style={styles.aiBoldText}>{tip.area}</Text>
-                            <Text style={{ fontSize: 9, color: '#1E6FFF', fontFamily: 'Noto Sans KR' }}>{tip.savedAmount}</Text>
+                    {/* Saving Tips */}
+                    <Text style={{ fontSize: 9, fontWeight: 'bold', color: GREEN, marginBottom: 6 }}>비용 절감 포인트</Text>
+                    {aiReport.costAnalysis.savingTips.map((tip, i) => (
+                        <View key={i} style={{ flexDirection: 'row', marginBottom: 6, padding: 8, backgroundColor: '#F9FAFB', borderRadius: 4, borderLeftWidth: 2, borderLeftColor: GREEN }}>
+                            <View style={{ width: 60, marginRight: 8 }}>
+                                <Text style={s.bold}>{tip.area}</Text>
+                                <Text style={{ fontSize: 8, color: BRAND, fontWeight: 'bold' }}>{tip.savedAmount}</Text>
+                            </View>
+                            <Text style={[s.small, { flex: 1 }]}>{tip.tip}</Text>
                         </View>
-                        <Text style={[styles.aiSmallText, { flex: 1 }]}>{tip.tip}</Text>
-                    </View>
-                ))}
+                    ))}
 
-                {/* 돈 아끼면 안 되는 항목 */}
-                <View style={{ marginTop: 10 }}>
-                    <Text style={{ fontSize: 9, color: '#FF3B30', fontWeight: 'bold', marginBottom: 4, fontFamily: 'Noto Sans KR' }}>돈 아끼면 안 되는 항목</Text>
+                    {/* Budget Priority */}
+                    <Text style={{ fontSize: 9, fontWeight: 'bold', color: RED, marginTop: 8, marginBottom: 4 }}>절대 아끼면 안 되는 항목</Text>
                     {aiReport.costAnalysis.budgetPriority.map((item, i) => (
-                        <View key={i} style={styles.bulletRow}>
-                            <Text style={[styles.bulletDot, { color: '#FF3B30' }]}>!</Text>
-                            <Text style={styles.aiSmallText}>{item}</Text>
+                        <View key={i} style={s.bulletRow}>
+                            <Text style={{ fontSize: 9, color: RED, marginRight: 5, width: 8, fontWeight: 'bold' }}>!</Text>
+                            <Text style={s.body}>{item}</Text>
                         </View>
                     ))}
                 </View>
+            )}
 
-                <View style={styles.footer}>
-                    <Text style={styles.footerText}>OPENING AI ANALYSIS</Text>
-                    <Text style={styles.footerText}>Page 4 / {totalPages}</Text>
+            {/* Non-AI: Checklist summary in cost page */}
+            {!hasAI && (
+                <View style={{ marginTop: 20 }}>
+                    <Text style={s.sectionHeaderDark}>Preparation Status</Text>
+                    <View style={{ flexDirection: 'row', gap: 12, marginTop: 6 }}>
+                        <View style={[s.card, { flex: 1, borderLeftWidth: 3, borderLeftColor: GREEN }]}>
+                            <Text style={{ fontSize: 8, color: '#888', marginBottom: 2 }}>준비 완료</Text>
+                            <Text style={{ fontSize: 20, fontWeight: 'bold', color: GREEN }}>{checklist.readyCount}개</Text>
+                        </View>
+                        <View style={[s.card, { flex: 1, borderLeftWidth: 3, borderLeftColor: ORANGE }]}>
+                            <Text style={{ fontSize: 8, color: '#888', marginBottom: 2 }}>도움 필요</Text>
+                            <Text style={{ fontSize: 20, fontWeight: 'bold', color: ORANGE }}>{checklist.worryCount}개</Text>
+                        </View>
+                    </View>
                 </View>
-            </Page>
-        )}
+            )}
 
+            <View style={s.footer}>
+                <Text style={s.footerText}>OPENING STARTUP SOLUTION</Text>
+                <Text style={s.footerText}>Page 2 / {totalPages}</Text>
+            </View>
+        </Page>
+
+        {/* ═══════════════════════════════════════════════════════════
+            PAGE 3: Location Analysis + Checklist Status
+           ═══════════════════════════════════════════════════════════ */}
+        <Page size="A4" style={s.page}>
+            {hasAI ? (
+                <>
+                    <Text style={s.pageTitle}>Location Analysis.</Text>
+                    <Text style={s.subtitle}>상권 입지 분석 및 체크리스트 현황</Text>
+
+                    {/* Grade + Reason */}
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                        <View style={{ width: 40, height: 40, borderRadius: 6, backgroundColor: gradeColor(aiReport.locationAnalysis.grade), justifyContent: 'center', alignItems: 'center', marginRight: 10 }}>
+                            <Text style={{ fontSize: 22, fontWeight: 'bold', color: '#FFF' }}>{aiReport.locationAnalysis.grade}</Text>
+                        </View>
+                        <View style={{ flex: 1 }}>
+                            <Text style={s.bold}>상권 등급: {aiReport.locationAnalysis.grade}등급</Text>
+                            <Text style={s.small}>{aiReport.locationAnalysis.gradeReason}</Text>
+                        </View>
+                    </View>
+
+                    {/* Target + Peak side by side */}
+                    <View style={{ flexDirection: 'row', gap: 8, marginBottom: 10 }}>
+                        <View style={[s.card, { flex: 1 }]}>
+                            <Text style={s.label}>주요 타겟 고객</Text>
+                            <Text style={s.body}>{aiReport.locationAnalysis.targetCustomer}</Text>
+                        </View>
+                        <View style={[s.card, { flex: 1 }]}>
+                            <Text style={s.label}>피크 시간대</Text>
+                            <Text style={s.body}>{aiReport.locationAnalysis.peakHours}</Text>
+                        </View>
+                    </View>
+
+                    {/* Strengths + Weaknesses side by side */}
+                    <View style={{ flexDirection: 'row', gap: 8, marginBottom: 10 }}>
+                        <View style={{ flex: 1 }}>
+                            <Text style={{ fontSize: 9, fontWeight: 'bold', color: GREEN, marginBottom: 4 }}>강점</Text>
+                            {aiReport.locationAnalysis.strengths.map((item, i) => (
+                                <View key={i} style={s.bulletRow}>
+                                    <Text style={{ fontSize: 9, color: GREEN, marginRight: 5, width: 8 }}>+</Text>
+                                    <Text style={s.body}>{item}</Text>
+                                </View>
+                            ))}
+                        </View>
+                        <View style={{ flex: 1 }}>
+                            <Text style={{ fontSize: 9, fontWeight: 'bold', color: ORANGE, marginBottom: 4 }}>약점</Text>
+                            {aiReport.locationAnalysis.weaknesses.map((item, i) => (
+                                <View key={i} style={s.bulletRow}>
+                                    <Text style={{ fontSize: 9, color: ORANGE, marginRight: 5, width: 8 }}>-</Text>
+                                    <Text style={s.body}>{item}</Text>
+                                </View>
+                            ))}
+                        </View>
+                    </View>
+
+                    {/* Nearby Tip */}
+                    <View style={s.cardBlue}>
+                        <Text style={{ fontSize: 9, fontWeight: 'bold', color: BRAND, marginBottom: 3 }}>주변 상권 활용 팁</Text>
+                        <Text style={s.body}>{aiReport.locationAnalysis.nearbyTip}</Text>
+                    </View>
+
+                    {/* Compact Checklist Status */}
+                    <Text style={[s.sectionHeaderDark, { marginTop: 10 }]}>Checklist Status</Text>
+                    <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
+                        {/* Ready Column */}
+                        <View style={{ flex: 1 }}>
+                            <Text style={{ fontSize: 9, fontWeight: 'bold', color: GREEN, marginBottom: 4 }}>준비 완료 ({checklist.readyCount})</Text>
+                            {checklist.readyItems.map((item, i) => (
+                                <View key={i} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 3 }}>
+                                    <View style={[s.checkDot, { backgroundColor: GREEN }]} />
+                                    <Text style={s.small}>{item}</Text>
+                                </View>
+                            ))}
+                            {checklist.readyCount === 0 && <Text style={s.small}>- 없음 -</Text>}
+                        </View>
+                        {/* Worry Column */}
+                        <View style={{ flex: 1 }}>
+                            <Text style={{ fontSize: 9, fontWeight: 'bold', color: ORANGE, marginBottom: 4 }}>도움 필요 ({checklist.worryCount})</Text>
+                            {checklist.worryItems.map((item, i) => (
+                                <View key={i} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 3 }}>
+                                    <View style={[s.checkDot, { backgroundColor: ORANGE }]} />
+                                    <Text style={s.small}>{item}</Text>
+                                </View>
+                            ))}
+                            {checklist.worryCount === 0 && <Text style={s.small}>- 없음 -</Text>}
+                        </View>
+                    </View>
+                </>
+            ) : (
+                <>
+                    <Text style={s.pageTitle}>Checklist.</Text>
+                    <Text style={s.subtitle}>창업 준비 현황</Text>
+
+                    <Text style={s.sectionHeaderDark}>Preparation Status</Text>
+                    <View style={{ flexDirection: 'row', gap: 10, marginTop: 6 }}>
+                        {/* Worry Column */}
+                        <View style={{ flex: 1 }}>
+                            <Text style={{ fontSize: 10, fontWeight: 'bold', color: ORANGE, marginBottom: 8 }}>도움 필요 ({checklist.worryCount})</Text>
+                            {checklist.worryItems.map((item, i) => (
+                                <View key={i} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
+                                    <View style={[s.checkDot, { backgroundColor: ORANGE }]} />
+                                    <Text style={{ fontSize: 10, color: '#444' }}>{item}</Text>
+                                </View>
+                            ))}
+                            {checklist.worryCount === 0 && <Text style={{ fontSize: 10, color: '#999' }}>- 없음 -</Text>}
+                        </View>
+                        {/* Ready Column */}
+                        <View style={{ flex: 1 }}>
+                            <Text style={{ fontSize: 10, fontWeight: 'bold', color: GREEN, marginBottom: 8 }}>준비 완료 ({checklist.readyCount})</Text>
+                            {checklist.readyItems.map((item, i) => (
+                                <View key={i} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
+                                    <View style={[s.checkDot, { backgroundColor: GREEN }]} />
+                                    <Text style={{ fontSize: 10, color: '#444' }}>{item}</Text>
+                                </View>
+                            ))}
+                            {checklist.readyCount === 0 && <Text style={{ fontSize: 10, color: '#999' }}>- 없음 -</Text>}
+                        </View>
+                    </View>
+
+                    {/* CTA */}
+                    <View style={[s.ctaBox, { marginTop: 30 }]}>
+                        <Text style={s.ctaTitle}>
+                            {checklist.worryCount > 0 ? "맞춤형 솔루션 제안 (Cost Saving Plan)" : "성공적인 오픈을 위한 최종 점검"}
+                        </Text>
+                        <Text style={s.ctaText}>
+                            {checklist.worryCount > 0
+                                ? `${checklist.worryCount}개의 '도움 필요' 항목에 대해 오프닝 전담 매니저가 구체적인 해결책과 비용 절감 방안을 준비했습니다. 내일 오전 중으로 연락드리겠습니다.`
+                                : "대부분의 준비가 완료되셨군요! 놓친 부분이 없는지 전담 매니저가 더블 체크를 도와드리겠습니다."}
+                        </Text>
+                    </View>
+                </>
+            )}
+
+            <View style={s.footer}>
+                <Text style={s.footerText}>{hasAI ? 'OPENING AI ANALYSIS' : 'OPENING STARTUP SOLUTION'}</Text>
+                <Text style={s.footerText}>Page 3 / {totalPages}</Text>
+            </View>
+        </Page>
+
+        {/* ═══════════════════════════════════════════════════════════
+            PAGE 4 (AI only): Checklist Advice + Risk Factors
+           ═══════════════════════════════════════════════════════════ */}
         {hasAI && (
-            /* PAGE 5: 체크리스트별 AI 조언 */
-            <Page size="A4" style={styles.page}>
-                <Text style={styles.aiPageTitle}>AI 체크리스트 조언</Text>
-                <Text style={styles.aiSubtitle}>항목별 맞춤 컨설팅</Text>
+            <Page size="A4" style={s.page}>
+                <Text style={s.pageTitle}>Expert Advice.</Text>
+                <Text style={s.subtitle}>AI 맞춤 컨설팅 및 리스크 분석</Text>
 
+                {/* Checklist AI Advice */}
+                <Text style={s.sectionHeader}>항목별 AI 조언</Text>
                 {aiReport.checklistAdvice.map((item, i) => {
-                    const statusColor = item.status === 'done' ? '#34C759' : item.status === 'worry' ? '#FF9500' : '#CCCCCC';
-                    const statusLabel = item.status === 'done' ? '완료' : item.status === 'worry' ? '도움 필요' : '미체크';
+                    const isReady = item.status === 'done';
+                    const statusColor = isReady ? GREEN : ORANGE;
+                    const statusText = isReady ? '완료' : '도움 필요';
+                    const title = checklistTitles?.[item.itemId] || item.itemId;
 
                     return (
-                        <View key={i} style={{ marginBottom: 10, paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: '#F0F0F0' }}>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 3 }}>
-                                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: statusColor, marginRight: 6 }} />
-                                <Text style={styles.aiBoldText}>{item.itemId}</Text>
-                                <Text style={{ fontSize: 8, color: statusColor, marginLeft: 6, fontFamily: 'Noto Sans KR' }}>({statusLabel})</Text>
+                        <View key={i} style={{ marginBottom: 8, paddingBottom: 6, borderBottomWidth: 1, borderBottomColor: '#F0F0F0' }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
+                                <View style={[s.checkDot, { backgroundColor: statusColor }]} />
+                                <Text style={s.bold}>{title}</Text>
+                                <Text style={{ fontSize: 7.5, color: statusColor, marginLeft: 4 }}>({statusText})</Text>
                             </View>
-                            <Text style={[styles.aiSmallText, { marginLeft: 14 }]}>{item.advice}</Text>
+                            <Text style={[s.small, { marginLeft: 14, marginBottom: 2 }]}>{item.advice}</Text>
 
-                            {/* worry 항목: 실행 단계 */}
+                            {/* Action Steps */}
                             {item.actionSteps && item.actionSteps.length > 0 && (
-                                <View style={{ marginLeft: 14, marginTop: 3 }}>
+                                <View style={{ marginLeft: 14, marginTop: 2 }}>
                                     {item.actionSteps.map((step, j) => (
-                                        <View key={j} style={styles.bulletRow}>
-                                            <Text style={{ fontSize: 9, color: '#1E6FFF', marginRight: 4, fontFamily: 'Noto Sans KR' }}>{j + 1}.</Text>
-                                            <Text style={styles.aiSmallText}>{step}</Text>
+                                        <View key={j} style={{ flexDirection: 'row', marginBottom: 1 }}>
+                                            <Text style={{ fontSize: 8, color: BRAND, marginRight: 3, width: 10 }}>{j + 1}.</Text>
+                                            <Text style={s.small}>{step}</Text>
                                         </View>
                                     ))}
                                 </View>
                             )}
-                            {/* 비용 팁 & 소요 기간 */}
+                            {/* Cost + Timeline */}
                             {(item.costTip || item.timeline) && (
-                                <View style={{ flexDirection: 'row', marginLeft: 14, marginTop: 2, gap: 12 }}>
-                                    {item.costTip && <Text style={{ fontSize: 8, color: '#1E6FFF', fontFamily: 'Noto Sans KR' }}>비용: {item.costTip}</Text>}
-                                    {item.timeline && <Text style={{ fontSize: 8, color: '#888', fontFamily: 'Noto Sans KR' }}>기간: {item.timeline}</Text>}
+                                <View style={{ flexDirection: 'row', marginLeft: 14, marginTop: 2, gap: 10 }}>
+                                    {item.costTip && <Text style={{ fontSize: 7.5, color: BRAND }}>비용: {item.costTip}</Text>}
+                                    {item.timeline && <Text style={{ fontSize: 7.5, color: '#888' }}>기간: {item.timeline}</Text>}
                                 </View>
                             )}
                         </View>
                     );
                 })}
 
-                <View style={styles.footer}>
-                    <Text style={styles.footerText}>OPENING AI ANALYSIS</Text>
-                    <Text style={styles.footerText}>Page 5 / {totalPages}</Text>
-                </View>
-            </Page>
-        )}
-
-        {hasAI && (
-            /* PAGE 6: 리스크 분석 */
-            <Page size="A4" style={styles.page}>
-                <Text style={styles.aiPageTitle}>리스크 분석</Text>
-                <Text style={styles.aiSubtitle}>주의해야 할 요인과 대응 방안</Text>
-
+                {/* Risk Factors */}
+                <Text style={[s.sectionHeader, { marginTop: 10 }]}>리스크 요인</Text>
                 {aiReport.riskFactors.map((risk, i) => {
-                    const color = getRiskColor(risk.level);
+                    const c = riskColor(risk.level);
                     return (
-                        <View key={i} style={[styles.riskCard, { borderLeftColor: color.border, backgroundColor: color.bg }]}>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-                                <Text style={{ fontSize: 8, color: color.border, fontWeight: 'bold', marginRight: 6, fontFamily: 'Noto Sans KR' }}>
-                                    [{getRiskLabel(risk.level)}]
-                                </Text>
-                                <Text style={styles.aiBoldText}>{risk.title}</Text>
+                        <View key={i} style={[s.riskCard, { borderLeftColor: c.border, backgroundColor: c.bg }]}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 3 }}>
+                                <Text style={{ fontSize: 7.5, color: c.border, fontWeight: 'bold', marginRight: 4 }}>[{riskLabel(risk.level)}]</Text>
+                                <Text style={s.bold}>{risk.title}</Text>
                             </View>
-                            <Text style={[styles.aiSmallText, { marginBottom: 4 }]}>{risk.description}</Text>
+                            <Text style={[s.small, { marginBottom: 3 }]}>{risk.description}</Text>
                             <View style={{ flexDirection: 'row' }}>
-                                <Text style={{ fontSize: 9, color: '#1E6FFF', fontWeight: 'bold', marginRight: 4, fontFamily: 'Noto Sans KR' }}>대응:</Text>
-                                <Text style={[styles.aiSmallText, { flex: 1 }]}>{risk.mitigation}</Text>
+                                <Text style={{ fontSize: 8, color: BRAND, fontWeight: 'bold', marginRight: 3 }}>대응:</Text>
+                                <Text style={[s.small, { flex: 1 }]}>{risk.mitigation}</Text>
                             </View>
                         </View>
                     );
                 })}
 
-                {/* 실행 로드맵 */}
-                <Text style={[styles.aiSectionHeader, { marginTop: 24 }]}>실행 로드맵</Text>
-                <Text style={{ fontSize: 10, color: '#1E6FFF', fontWeight: 'bold', marginBottom: 12, fontFamily: 'Noto Sans KR' }}>
+                <View style={s.footer}>
+                    <Text style={s.footerText}>OPENING AI ANALYSIS</Text>
+                    <Text style={s.footerText}>Page 4 / {totalPages}</Text>
+                </View>
+            </Page>
+        )}
+
+        {/* ═══════════════════════════════════════════════════════════
+            PAGE 5 (AI only): Action Plan + Opening Tip + CTA
+           ═══════════════════════════════════════════════════════════ */}
+        {hasAI && (
+            <Page size="A4" style={s.page}>
+                <Text style={s.pageTitle}>Action Plan.</Text>
+                <Text style={s.subtitle}>실행 로드맵 및 최종 정리</Text>
+
+                {/* Roadmap */}
+                <Text style={s.sectionHeader}>실행 로드맵</Text>
+                <Text style={{ fontSize: 9, color: BRAND, fontWeight: 'bold', marginBottom: 8 }}>
                     총 예상 기간: {aiReport.actionPlan.totalDuration}
                 </Text>
 
                 {aiReport.actionPlan.phases.map((phase, i) => (
-                    <View key={i} style={styles.phaseRow}>
-                        <View style={styles.phaseBadge}>
-                            <Text style={styles.phaseName}>{phase.phase.split(':')[0] || phase.phase}</Text>
-                            <Text style={styles.phaseDuration}>{phase.duration}</Text>
+                    <View key={i} style={s.phaseRow}>
+                        <View style={s.phaseBadge}>
+                            <Text style={{ fontSize: 9, fontWeight: 'bold', color: BRAND }}>{phase.phase.split(':')[0] || phase.phase}</Text>
+                            <Text style={{ fontSize: 8, color: '#888' }}>{phase.duration}</Text>
                         </View>
                         <View style={{ flex: 1 }}>
                             {phase.phase.includes(':') && (
-                                <Text style={[styles.aiBoldText, { marginBottom: 2 }]}>
+                                <Text style={[s.bold, { marginBottom: 2 }]}>
                                     {phase.phase.split(':').slice(1).join(':').trim()}
                                 </Text>
                             )}
                             {phase.tasks.map((task, j) => (
-                                <View key={j} style={styles.bulletRow}>
-                                    <Text style={styles.bulletDot}>-</Text>
-                                    <Text style={styles.aiSmallText}>{task}</Text>
+                                <View key={j} style={s.bulletRow}>
+                                    <Text style={s.bulletDot}>-</Text>
+                                    <Text style={s.small}>{task}</Text>
                                 </View>
                             ))}
                         </View>
                     </View>
                 ))}
 
-                <View style={styles.footer}>
-                    <Text style={styles.footerText}>OPENING AI ANALYSIS</Text>
-                    <Text style={styles.footerText}>Page 6 / {totalPages}</Text>
-                </View>
-            </Page>
-        )}
-
-        {hasAI && (
-            /* PAGE 7: 오프닝 한마디 + CTA */
-            <Page size="A4" style={styles.page}>
-                <Text style={styles.aiPageTitle}>Opening Tip.</Text>
-                <Text style={styles.aiSubtitle}>Opening AI의 창업 꿀팁</Text>
-
-                <View style={{ padding: 20, backgroundColor: '#F0F6FF', borderRadius: 6, marginBottom: 30 }}>
-                    <Text style={{ fontSize: 14, color: '#333333', lineHeight: 1.8, fontFamily: 'Noto Sans KR' }}>
+                {/* Opening Tip */}
+                <Text style={[s.sectionHeader, { marginTop: 8 }]}>Opening Tip</Text>
+                <View style={[s.cardBlue, { padding: 14 }]}>
+                    <Text style={{ fontSize: 10.5, color: '#333', lineHeight: 1.7 }}>
                         "{aiReport.openingTip}"
                     </Text>
                 </View>
 
-                {/* 최종 요약 카드 */}
-                <View style={{ padding: 20, backgroundColor: '#FAFAFA', borderRadius: 6, marginBottom: 20 }}>
-                    <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#000', marginBottom: 8, fontFamily: 'Noto Sans KR' }}>
-                        {aiReport.summary.title}
-                    </Text>
-                    <View style={{ flexDirection: 'row', marginBottom: 8 }}>
-                        <View style={{ flex: 1 }}>
-                            <Text style={{ fontSize: 9, color: '#888', fontFamily: 'Noto Sans KR' }}>준비도 점수</Text>
-                            <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#1E6FFF', fontFamily: 'Noto Sans KR' }}>{aiReport.summary.overallScore}점</Text>
-                        </View>
-                        <View style={{ flex: 1 }}>
-                            <Text style={{ fontSize: 9, color: '#888', fontFamily: 'Noto Sans KR' }}>상권 등급</Text>
-                            <Text style={{ fontSize: 20, fontWeight: 'bold', color: getGradeColor(aiReport.locationAnalysis.grade), fontFamily: 'Noto Sans KR' }}>{aiReport.locationAnalysis.grade}등급</Text>
-                        </View>
-                        <View style={{ flex: 1 }}>
-                            <Text style={{ fontSize: 9, color: '#888', fontFamily: 'Noto Sans KR' }}>예상 기간</Text>
-                            <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#333', fontFamily: 'Noto Sans KR' }}>{aiReport.actionPlan.totalDuration}</Text>
-                        </View>
+                {/* Final Summary Card */}
+                <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+                    <View style={[s.card, { flex: 1, alignItems: 'center', paddingVertical: 12 }]}>
+                        <Text style={{ fontSize: 7.5, color: '#888', marginBottom: 2 }}>잠재력 점수</Text>
+                        <Text style={{ fontSize: 22, fontWeight: 'bold', color: BRAND }}>{aiReport.summary.overallScore}</Text>
+                        <Text style={{ fontSize: 8, color: '#888' }}>{aiReport.summary.scoreLabel}</Text>
+                    </View>
+                    <View style={[s.card, { flex: 1, alignItems: 'center', paddingVertical: 12 }]}>
+                        <Text style={{ fontSize: 7.5, color: '#888', marginBottom: 2 }}>상권 등급</Text>
+                        <Text style={{ fontSize: 22, fontWeight: 'bold', color: gradeColor(aiReport.locationAnalysis.grade) }}>{aiReport.locationAnalysis.grade}</Text>
+                        <Text style={{ fontSize: 8, color: '#888' }}>{aiReport.locationAnalysis.grade}등급</Text>
+                    </View>
+                    <View style={[s.card, { flex: 1, alignItems: 'center', paddingVertical: 12 }]}>
+                        <Text style={{ fontSize: 7.5, color: '#888', marginBottom: 2 }}>예상 준비 기간</Text>
+                        <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#333', marginTop: 4 }}>{aiReport.actionPlan.totalDuration}</Text>
                     </View>
                 </View>
 
                 {/* CTA */}
-                <View style={[styles.ctaBox, { marginTop: 20 }]}>
-                    <Text style={styles.ctaTitle}>오프닝과 함께 시작하세요</Text>
-                    <Text style={styles.ctaText}>
-                        이 보고서는 AI가 생성한 참고 자료입니다. 전담 매니저와 상담하시면 더욱 정밀한 맞춤 솔루션을 받으실 수 있습니다.
+                <View style={[s.ctaBox, { marginTop: 10 }]}>
+                    <Text style={s.ctaTitle}>오프닝과 함께 시작하세요</Text>
+                    <Text style={s.ctaText}>
+                        이 보고서는 Opening AI가 생성한 참고 자료입니다. 전담 매니저와 상담하시면 더욱 정밀한 맞춤 솔루션을 받으실 수 있습니다.
+                        {checklist.worryCount > 0 && ` ${checklist.worryCount}개의 '도움 필요' 항목에 대한 구체적인 해결 방안을 준비해 드리겠습니다.`}
                     </Text>
                 </View>
 
-                <View style={styles.footer}>
-                    <Text style={styles.footerText}>OPENING AI ANALYSIS</Text>
-                    <Text style={styles.footerText}>Page 7 / {totalPages}</Text>
+                <View style={s.footer}>
+                    <Text style={s.footerText}>OPENING AI ANALYSIS</Text>
+                    <Text style={s.footerText}>Page 5 / {totalPages}</Text>
                 </View>
             </Page>
         )}
