@@ -114,7 +114,7 @@ const CHECKLIST_COMMON: Omit<ChecklistItem, 'status'>[] = [
   { id: 'card_merchant', category: '행정/서류', title: '카드사 가맹 신청', description: '손님이 카드로 결제하려면 필수', icon: CreditCard, estimatedCost: { min: 0, max: 0, unit: '무료(대행)' }, isRequired: true }, // [추가]
 
   // 2. 안전/보험 (필수)
-  { id: 'fire_insurance', category: '행정/서류', title: '화재배상 책임보험', description: '화재 사고 대비 필수 보험', icon: ShieldAlert, estimatedCost: { min: 2, max: 10, unit: '월 만원' }, isRequired: true }, // [추가]
+  { id: 'fire_insurance', category: '행정/서류', title: '화재배상 책임보험 가입', description: '다중이용업소 필수, 가입비 월 2~10만원 수준', icon: ShieldAlert, estimatedCost: { min: 2, max: 10, unit: '월 만원' }, isRequired: true }, // [추가]
 
   // 3. 공사
   { id: 'interior', category: '인테리어/공사', title: '인테리어 공사', description: '철거·설비·마감 포함', icon: PaintBucket, estimatedCost: { min: 150, max: 400, unit: '평당 만원' }, isRequired: true },
