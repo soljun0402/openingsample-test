@@ -25,6 +25,7 @@ import {
 } from '../data/seoulDistricts';
 import { getMarketAnalysis, MarketAnalysisData } from '../utils/seoulDataApi';
 import { getCategoryMetric } from '../data/categoryMetrics';
+import { buildReportInput, generateAIReport } from '../utils/aiReportApi';
 
 interface ServiceJourneyViewProps {
   onBack?: () => void;
@@ -360,6 +361,7 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
 
   // PDF 견적서
   const [estimateResult, setEstimateResult] = useState<EstimatePDFProps | null>(null);
+  const [aiReportLoading, setAiReportLoading] = useState(false);
 
   // 결제 게이트
   const [showPaymentGate, setShowPaymentGate] = useState(false);
@@ -2076,8 +2078,12 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
 
             {/* 견적서 다운로드 */}
             <button
-              onClick={() => {
+              disabled={aiReportLoading}
+              onClick={async () => {
                 const storeSizeNum = typeof storeSize === 'number' ? storeSize : 17;
+                const categoryLabel = BUSINESS_CATEGORIES.find(c => c.id === businessCategory)?.label || '매장';
+
+                // 기존 PDF 데이터 구성
                 const data: EstimatePDFProps = {
                   customerName: '예비 창업자',
                   totalCostRange: {
@@ -2110,22 +2116,45 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
                     worryItems: checklist.filter(i => i.status === 'worry').map(i => i.title),
                     readyItems: checklist.filter(i => i.status === 'done').map(i => i.title),
                   },
-                  projectName: `${dong} ${BUSINESS_CATEGORIES.find(c => c.id === businessCategory)?.label || '매장'} 창업`,
+                  projectName: `${dong} ${categoryLabel} 창업`,
                 };
+
+                // AI 보고서 생성 (비동기, 실패 시 null → 기존 PDF로 폴백)
+                setAiReportLoading(true);
                 setEstimateResult(data);
+
+                try {
+                  const reportInput = buildReportInput({
+                    businessCategory,
+                    businessCategoryLabel: categoryLabel,
+                    selectedGu,
+                    dong,
+                    storeSize,
+                    marketData,
+                    estimatedCosts,
+                    checklist,
+                  });
+                  const aiReport = await generateAIReport(reportInput);
+                  setEstimateResult({ ...data, aiReport: aiReport ?? undefined });
+                } catch (err) {
+                  console.error('AI 보고서 생성 중 오류:', err);
+                  // aiReport 없이 기존 PDF 유지
+                } finally {
+                  setAiReportLoading(false);
+                }
               }}
-              className="w-full bg-white border-2 border-brand-200 rounded-xl p-4 flex items-center justify-between hover:bg-brand-50 transition-colors"
+              className="w-full bg-white border-2 border-brand-200 rounded-xl p-4 flex items-center justify-between hover:bg-brand-50 transition-colors disabled:opacity-50"
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center">
-                  <FileText size={20} className="text-brand-600" />
+                  {aiReportLoading ? <Loader2 size={20} className="text-brand-600 animate-spin" /> : <FileText size={20} className="text-brand-600" />}
                 </div>
                 <div className="text-left">
-                  <p className="font-bold text-sm text-gray-900">견적서 다운로드</p>
-                  <p className="text-xs text-gray-500">PDF로 상세 견적 리포트를 받아보세요</p>
+                  <p className="font-bold text-sm text-gray-900">{aiReportLoading ? 'AI 분석 중...' : '견적서 다운로드'}</p>
+                  <p className="text-xs text-gray-500">{aiReportLoading ? 'AI가 맞춤형 보고서를 생성하고 있습니다' : 'PDF로 상세 견적 리포트를 받아보세요'}</p>
                 </div>
               </div>
-              <ChevronRight size={20} className="text-gray-400" />
+              {aiReportLoading ? <Loader2 size={20} className="text-brand-400 animate-spin" /> : <ChevronRight size={20} className="text-gray-400" />}
             </button>
 
             {/* PM에게 전할 메시지 */}
@@ -2174,7 +2203,7 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
             ) : currentStep === 6 ? (
               <>
                 <Rocket size={20} className="mr-2" />
-                {isGuestMode ? '로그인하고 매니저 배정받기' : project?.id ? '프로젝트 현황 보기' : '매니저 배정 신청하기'}
+                {isGuestMode ? '로그인하고 무료로 전문 매니저 배정받기' : project?.id ? '프로젝트 현황 보기' : '매니저 배정 신청하기'}
               </>
             ) : (
               <>

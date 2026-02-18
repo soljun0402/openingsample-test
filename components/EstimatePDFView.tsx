@@ -1,5 +1,6 @@
 import React from 'react';
 import { Page, Text, View, Document, StyleSheet, Font } from '@react-pdf/renderer';
+import type { AIReportOutput } from '../utils/aiReportApi';
 
 // Register Korean Font (Noto Sans KR)
 Font.register({
@@ -45,7 +46,7 @@ const styles = StyleSheet.create({
     },
     // Typography
     serifTitle: {
-        fontFamily: 'Noto Sans KR', // Using generic for now as we only registered one
+        fontFamily: 'Noto Sans KR',
         fontSize: 42,
         fontWeight: 'bold',
         marginBottom: 10,
@@ -63,7 +64,7 @@ const styles = StyleSheet.create({
         paddingBottom: 5,
     },
     brandText: {
-        color: '#1E6FFF', // Brand Blue
+        color: '#1E6FFF',
     },
     // Hero Section
     heroSection: {
@@ -73,7 +74,7 @@ const styles = StyleSheet.create({
     heroQuote: {
         fontFamily: 'Noto Sans KR',
         fontSize: 24,
-        fontStyle: 'normal', // Italic often not supported in CJK fonts directly without specific file
+        fontStyle: 'normal',
         marginBottom: 20,
         lineHeight: 1.4,
         color: '#333333',
@@ -188,7 +189,135 @@ const styles = StyleSheet.create({
         fontSize: 11,
         color: '#333333',
         lineHeight: 1.4,
-    }
+    },
+    // ─── AI Report Styles ───
+    aiPageTitle: {
+        fontFamily: 'Noto Sans KR',
+        fontSize: 28,
+        fontWeight: 'bold',
+        color: '#000000',
+        marginBottom: 6,
+    },
+    aiSubtitle: {
+        fontSize: 11,
+        color: '#888888',
+        marginBottom: 24,
+    },
+    aiSectionHeader: {
+        fontFamily: 'Noto Sans KR',
+        fontSize: 13,
+        fontWeight: 'bold',
+        color: '#1E6FFF',
+        marginBottom: 8,
+        marginTop: 16,
+        paddingBottom: 4,
+        borderBottomWidth: 1,
+        borderBottomColor: '#E5EDFF',
+    },
+    aiBodyText: {
+        fontSize: 10,
+        color: '#333333',
+        lineHeight: 1.6,
+        fontFamily: 'Noto Sans KR',
+    },
+    aiSmallText: {
+        fontSize: 9,
+        color: '#666666',
+        lineHeight: 1.5,
+        fontFamily: 'Noto Sans KR',
+    },
+    aiBoldText: {
+        fontSize: 10,
+        color: '#000000',
+        fontFamily: 'Noto Sans KR',
+        fontWeight: 'bold',
+    },
+    // Score badge
+    scoreContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 16,
+        padding: 12,
+        backgroundColor: '#F0F6FF',
+        borderRadius: 6,
+    },
+    scoreNumber: {
+        fontSize: 36,
+        fontWeight: 'bold',
+        color: '#1E6FFF',
+        fontFamily: 'Noto Sans KR',
+        marginRight: 12,
+    },
+    scoreLabel: {
+        fontSize: 12,
+        color: '#666666',
+        fontFamily: 'Noto Sans KR',
+    },
+    // Grade badge
+    gradeBadge: {
+        width: 32,
+        height: 32,
+        borderRadius: 4,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 10,
+    },
+    gradeText: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#FFFFFF',
+        fontFamily: 'Noto Sans KR',
+    },
+    // Bullet item
+    bulletRow: {
+        flexDirection: 'row',
+        marginBottom: 4,
+        paddingLeft: 4,
+    },
+    bulletDot: {
+        fontSize: 10,
+        color: '#1E6FFF',
+        marginRight: 6,
+        width: 10,
+    },
+    // Risk card
+    riskCard: {
+        padding: 10,
+        marginBottom: 8,
+        borderRadius: 4,
+        borderLeftWidth: 3,
+    },
+    // Phase row
+    phaseRow: {
+        flexDirection: 'row',
+        marginBottom: 10,
+        paddingBottom: 8,
+        borderBottomWidth: 1,
+        borderBottomColor: '#F0F0F0',
+    },
+    phaseBadge: {
+        width: 60,
+        marginRight: 10,
+    },
+    phaseName: {
+        fontSize: 10,
+        fontWeight: 'bold',
+        color: '#1E6FFF',
+        fontFamily: 'Noto Sans KR',
+    },
+    phaseDuration: {
+        fontSize: 9,
+        color: '#888888',
+        fontFamily: 'Noto Sans KR',
+    },
+    // Saving tip row
+    savingTipRow: {
+        flexDirection: 'row',
+        marginBottom: 8,
+        padding: 8,
+        backgroundColor: '#F9FAFB',
+        borderRadius: 4,
+    },
 });
 
 // Interfaces
@@ -201,7 +330,7 @@ interface CostBreakdownItem {
 interface ChecklistData {
     readyCount: number;
     worryCount: number;
-    worryItems: string[]; // List of items user marked as "Help Needed"
+    worryItems: string[];
     readyItems: string[];
 }
 
@@ -210,21 +339,18 @@ export interface EstimatePDFProps {
     totalCostRange: { min: number; max: number };
     locationData: {
         region: string;
-        analysis: { label: string; value: string }[]; // e.g., 'Target', 'Traffic'
+        analysis: { label: string; value: string }[];
     };
     costBreakdown: CostBreakdownItem[];
     checklist: ChecklistData;
     projectName?: string;
+    aiReport?: AIReportOutput;
 }
 
 // Helper
 const formatCurrency = (amount: number) => {
-    // Safety check: specific fix for user report "2.241만원"
-    // If amount is very small (e.g. < 100,000), it's likely Man-won passed as Won.
-    // 22410 Man-won = 2.2 Eok.
-    // If we receive 22410, treat as Man-won -> 224,100,000.
     let safeAmount = amount;
-    if (amount < 500000) { // arbitrary threshold, 500k Won is very small for a store.
+    if (amount < 500000) {
         safeAmount = amount * 10000;
     }
 
@@ -240,6 +366,35 @@ const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('ko-KR').format(Math.floor(safeAmount / 10000)) + '만원';
 };
 
+const getGradeColor = (grade: string) => {
+    switch (grade) {
+        case 'S': return '#6C3CE9';
+        case 'A': return '#1E6FFF';
+        case 'B': return '#34C759';
+        case 'C': return '#FF9500';
+        case 'D': return '#FF3B30';
+        default: return '#888888';
+    }
+};
+
+const getRiskColor = (level: string) => {
+    switch (level) {
+        case 'high': return { border: '#FF3B30', bg: '#FFF5F5' };
+        case 'medium': return { border: '#FF9500', bg: '#FFFBF0' };
+        case 'low': return { border: '#34C759', bg: '#F0FFF4' };
+        default: return { border: '#888888', bg: '#F5F5F5' };
+    }
+};
+
+const getRiskLabel = (level: string) => {
+    switch (level) {
+        case 'high': return '높음';
+        case 'medium': return '보통';
+        case 'low': return '낮음';
+        default: return level;
+    }
+};
+
 // Component
 export const EstimatePDFDocument: React.FC<EstimatePDFProps> = ({
     customerName,
@@ -247,8 +402,13 @@ export const EstimatePDFDocument: React.FC<EstimatePDFProps> = ({
     locationData,
     costBreakdown,
     checklist,
-    projectName
-}) => (
+    projectName,
+    aiReport
+}) => {
+    const hasAI = !!aiReport;
+    const totalPages = hasAI ? 7 : 3;
+
+    return (
     <Document>
         {/* PAGE 1: Concept & Summary */}
         <Page size="A4" style={styles.page}>
@@ -260,13 +420,35 @@ export const EstimatePDFDocument: React.FC<EstimatePDFProps> = ({
             {/* Hero Section */}
             <View style={styles.heroSection}>
                 <Text style={styles.heroQuote}>
-                    창업이라는 긴 여정, 오프닝이 가장 든든한 페이스메이커가 되어 드릴게요.
+                    {hasAI ? aiReport.summary.oneLiner : '창업이라는 긴 여정, 오프닝이 가장 든든한 페이스메이커가 되어 드릴게요.'}
                 </Text>
                 <Text style={styles.costRange}>
                     {formatCurrency(totalCostRange.min)} ~ {formatCurrency(totalCostRange.max)}
                 </Text>
                 <Text style={styles.costLabel}>ESTIMATED TOTAL COST RANGE</Text>
             </View>
+
+            {/* AI Summary Score */}
+            {hasAI && (
+                <View style={styles.scoreContainer}>
+                    <Text style={styles.scoreNumber}>{aiReport.summary.overallScore}</Text>
+                    <View>
+                        <Text style={styles.aiBoldText}>창업 준비도 점수</Text>
+                        <Text style={styles.scoreLabel}>{aiReport.summary.scoreLabel}</Text>
+                    </View>
+                </View>
+            )}
+
+            {hasAI && (
+                <View style={{ marginBottom: 20 }}>
+                    {aiReport.summary.keyHighlights.map((h, i) => (
+                        <View key={i} style={styles.bulletRow}>
+                            <Text style={styles.bulletDot}>-</Text>
+                            <Text style={styles.aiBodyText}>{h}</Text>
+                        </View>
+                    ))}
+                </View>
+            )}
 
             {/* Technical Data (Market Analysis) */}
             <Text style={styles.sectionTitle}>Technical Data: Location Analysis</Text>
@@ -285,7 +467,7 @@ export const EstimatePDFDocument: React.FC<EstimatePDFProps> = ({
 
             <View style={styles.footer}>
                 <Text style={styles.footerText}>OPENING STARTUP SOLUTION (Rev. Final)</Text>
-                <Text style={styles.footerText}>Page 1 / 3</Text>
+                <Text style={styles.footerText}>Page 1 / {totalPages}</Text>
             </View>
         </Page>
 
@@ -314,7 +496,7 @@ export const EstimatePDFDocument: React.FC<EstimatePDFProps> = ({
 
             <View style={styles.footer}>
                 <Text style={styles.footerText}>OPENING STARTUP SOLUTION (Rev. Final)</Text>
-                <Text style={styles.footerText}>Page 2 / 3</Text>
+                <Text style={styles.footerText}>Page 2 / {totalPages}</Text>
             </View>
         </Page>
 
@@ -376,8 +558,255 @@ export const EstimatePDFDocument: React.FC<EstimatePDFProps> = ({
 
             <View style={styles.footer}>
                 <Text style={styles.footerText}>OPENING STARTUP SOLUTION (Rev. Final)</Text>
-                <Text style={styles.footerText}>Page 3 / 3</Text>
+                <Text style={styles.footerText}>Page 3 / {totalPages}</Text>
             </View>
         </Page>
+
+        {/* ═══════════════════════════════════════════════════════════
+            AI REPORT PAGES (4~7) — aiReport가 있을 때만 렌더링
+           ═══════════════════════════════════════════════════════════ */}
+
+        {hasAI && (
+            /* PAGE 4: AI 상권 분석 */
+            <Page size="A4" style={styles.page}>
+                <Text style={styles.aiPageTitle}>AI 상권 분석</Text>
+                <Text style={styles.aiSubtitle}>Opening AI가 분석한 입지 리포트</Text>
+
+                {/* 상권 등급 */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+                    <View style={[styles.gradeBadge, { backgroundColor: getGradeColor(aiReport.locationAnalysis.grade) }]}>
+                        <Text style={styles.gradeText}>{aiReport.locationAnalysis.grade}</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                        <Text style={styles.aiBoldText}>상권 등급: {aiReport.locationAnalysis.grade}등급</Text>
+                        <Text style={styles.aiSmallText}>{aiReport.locationAnalysis.gradeReason}</Text>
+                    </View>
+                </View>
+
+                {/* 타겟 고객 & 피크 시간 */}
+                <View style={{ flexDirection: 'row', marginBottom: 16, gap: 12 }}>
+                    <View style={{ flex: 1, padding: 10, backgroundColor: '#F9FAFB', borderRadius: 4 }}>
+                        <Text style={{ fontSize: 9, color: '#888', marginBottom: 4, fontFamily: 'Noto Sans KR' }}>주요 타겟 고객</Text>
+                        <Text style={styles.aiBodyText}>{aiReport.locationAnalysis.targetCustomer}</Text>
+                    </View>
+                    <View style={{ flex: 1, padding: 10, backgroundColor: '#F9FAFB', borderRadius: 4 }}>
+                        <Text style={{ fontSize: 9, color: '#888', marginBottom: 4, fontFamily: 'Noto Sans KR' }}>피크 시간대</Text>
+                        <Text style={styles.aiBodyText}>{aiReport.locationAnalysis.peakHours}</Text>
+                    </View>
+                </View>
+
+                {/* 강점 */}
+                <Text style={styles.aiSectionHeader}>강점</Text>
+                {aiReport.locationAnalysis.strengths.map((s, i) => (
+                    <View key={i} style={styles.bulletRow}>
+                        <Text style={[styles.bulletDot, { color: '#34C759' }]}>+</Text>
+                        <Text style={styles.aiBodyText}>{s}</Text>
+                    </View>
+                ))}
+
+                {/* 약점 */}
+                <Text style={styles.aiSectionHeader}>약점</Text>
+                {aiReport.locationAnalysis.weaknesses.map((w, i) => (
+                    <View key={i} style={styles.bulletRow}>
+                        <Text style={[styles.bulletDot, { color: '#FF9500' }]}>-</Text>
+                        <Text style={styles.aiBodyText}>{w}</Text>
+                    </View>
+                ))}
+
+                {/* 주변 상권 활용 팁 */}
+                <View style={[styles.ctaBox, { marginTop: 16 }]}>
+                    <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#1E6FFF', marginBottom: 4, fontFamily: 'Noto Sans KR' }}>주변 상권 활용 팁</Text>
+                    <Text style={styles.aiBodyText}>{aiReport.locationAnalysis.nearbyTip}</Text>
+                </View>
+
+                {/* 비용 분석 미리보기 */}
+                <Text style={[styles.aiSectionHeader, { marginTop: 20 }]}>비용 분석</Text>
+                <Text style={styles.aiBodyText}>{aiReport.costAnalysis.totalComment}</Text>
+
+                {/* 절감 팁 */}
+                {aiReport.costAnalysis.savingTips.map((tip, i) => (
+                    <View key={i} style={styles.savingTipRow}>
+                        <View style={{ width: 60, marginRight: 8 }}>
+                            <Text style={styles.aiBoldText}>{tip.area}</Text>
+                            <Text style={{ fontSize: 9, color: '#1E6FFF', fontFamily: 'Noto Sans KR' }}>{tip.savedAmount}</Text>
+                        </View>
+                        <Text style={[styles.aiSmallText, { flex: 1 }]}>{tip.tip}</Text>
+                    </View>
+                ))}
+
+                {/* 돈 아끼면 안 되는 항목 */}
+                <View style={{ marginTop: 10 }}>
+                    <Text style={{ fontSize: 9, color: '#FF3B30', fontWeight: 'bold', marginBottom: 4, fontFamily: 'Noto Sans KR' }}>돈 아끼면 안 되는 항목</Text>
+                    {aiReport.costAnalysis.budgetPriority.map((item, i) => (
+                        <View key={i} style={styles.bulletRow}>
+                            <Text style={[styles.bulletDot, { color: '#FF3B30' }]}>!</Text>
+                            <Text style={styles.aiSmallText}>{item}</Text>
+                        </View>
+                    ))}
+                </View>
+
+                <View style={styles.footer}>
+                    <Text style={styles.footerText}>OPENING AI ANALYSIS</Text>
+                    <Text style={styles.footerText}>Page 4 / {totalPages}</Text>
+                </View>
+            </Page>
+        )}
+
+        {hasAI && (
+            /* PAGE 5: 체크리스트별 AI 조언 */
+            <Page size="A4" style={styles.page}>
+                <Text style={styles.aiPageTitle}>AI 체크리스트 조언</Text>
+                <Text style={styles.aiSubtitle}>항목별 맞춤 컨설팅</Text>
+
+                {aiReport.checklistAdvice.map((item, i) => {
+                    const statusColor = item.status === 'done' ? '#34C759' : item.status === 'worry' ? '#FF9500' : '#CCCCCC';
+                    const statusLabel = item.status === 'done' ? '완료' : item.status === 'worry' ? '도움 필요' : '미체크';
+
+                    return (
+                        <View key={i} style={{ marginBottom: 10, paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: '#F0F0F0' }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 3 }}>
+                                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: statusColor, marginRight: 6 }} />
+                                <Text style={styles.aiBoldText}>{item.itemId}</Text>
+                                <Text style={{ fontSize: 8, color: statusColor, marginLeft: 6, fontFamily: 'Noto Sans KR' }}>({statusLabel})</Text>
+                            </View>
+                            <Text style={[styles.aiSmallText, { marginLeft: 14 }]}>{item.advice}</Text>
+
+                            {/* worry 항목: 실행 단계 */}
+                            {item.actionSteps && item.actionSteps.length > 0 && (
+                                <View style={{ marginLeft: 14, marginTop: 3 }}>
+                                    {item.actionSteps.map((step, j) => (
+                                        <View key={j} style={styles.bulletRow}>
+                                            <Text style={{ fontSize: 9, color: '#1E6FFF', marginRight: 4, fontFamily: 'Noto Sans KR' }}>{j + 1}.</Text>
+                                            <Text style={styles.aiSmallText}>{step}</Text>
+                                        </View>
+                                    ))}
+                                </View>
+                            )}
+                            {/* 비용 팁 & 소요 기간 */}
+                            {(item.costTip || item.timeline) && (
+                                <View style={{ flexDirection: 'row', marginLeft: 14, marginTop: 2, gap: 12 }}>
+                                    {item.costTip && <Text style={{ fontSize: 8, color: '#1E6FFF', fontFamily: 'Noto Sans KR' }}>비용: {item.costTip}</Text>}
+                                    {item.timeline && <Text style={{ fontSize: 8, color: '#888', fontFamily: 'Noto Sans KR' }}>기간: {item.timeline}</Text>}
+                                </View>
+                            )}
+                        </View>
+                    );
+                })}
+
+                <View style={styles.footer}>
+                    <Text style={styles.footerText}>OPENING AI ANALYSIS</Text>
+                    <Text style={styles.footerText}>Page 5 / {totalPages}</Text>
+                </View>
+            </Page>
+        )}
+
+        {hasAI && (
+            /* PAGE 6: 리스크 분석 */
+            <Page size="A4" style={styles.page}>
+                <Text style={styles.aiPageTitle}>리스크 분석</Text>
+                <Text style={styles.aiSubtitle}>주의해야 할 요인과 대응 방안</Text>
+
+                {aiReport.riskFactors.map((risk, i) => {
+                    const color = getRiskColor(risk.level);
+                    return (
+                        <View key={i} style={[styles.riskCard, { borderLeftColor: color.border, backgroundColor: color.bg }]}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                                <Text style={{ fontSize: 8, color: color.border, fontWeight: 'bold', marginRight: 6, fontFamily: 'Noto Sans KR' }}>
+                                    [{getRiskLabel(risk.level)}]
+                                </Text>
+                                <Text style={styles.aiBoldText}>{risk.title}</Text>
+                            </View>
+                            <Text style={[styles.aiSmallText, { marginBottom: 4 }]}>{risk.description}</Text>
+                            <View style={{ flexDirection: 'row' }}>
+                                <Text style={{ fontSize: 9, color: '#1E6FFF', fontWeight: 'bold', marginRight: 4, fontFamily: 'Noto Sans KR' }}>대응:</Text>
+                                <Text style={[styles.aiSmallText, { flex: 1 }]}>{risk.mitigation}</Text>
+                            </View>
+                        </View>
+                    );
+                })}
+
+                {/* 실행 로드맵 */}
+                <Text style={[styles.aiSectionHeader, { marginTop: 24 }]}>실행 로드맵</Text>
+                <Text style={{ fontSize: 10, color: '#1E6FFF', fontWeight: 'bold', marginBottom: 12, fontFamily: 'Noto Sans KR' }}>
+                    총 예상 기간: {aiReport.actionPlan.totalDuration}
+                </Text>
+
+                {aiReport.actionPlan.phases.map((phase, i) => (
+                    <View key={i} style={styles.phaseRow}>
+                        <View style={styles.phaseBadge}>
+                            <Text style={styles.phaseName}>{phase.phase.split(':')[0] || phase.phase}</Text>
+                            <Text style={styles.phaseDuration}>{phase.duration}</Text>
+                        </View>
+                        <View style={{ flex: 1 }}>
+                            {phase.phase.includes(':') && (
+                                <Text style={[styles.aiBoldText, { marginBottom: 2 }]}>
+                                    {phase.phase.split(':').slice(1).join(':').trim()}
+                                </Text>
+                            )}
+                            {phase.tasks.map((task, j) => (
+                                <View key={j} style={styles.bulletRow}>
+                                    <Text style={styles.bulletDot}>-</Text>
+                                    <Text style={styles.aiSmallText}>{task}</Text>
+                                </View>
+                            ))}
+                        </View>
+                    </View>
+                ))}
+
+                <View style={styles.footer}>
+                    <Text style={styles.footerText}>OPENING AI ANALYSIS</Text>
+                    <Text style={styles.footerText}>Page 6 / {totalPages}</Text>
+                </View>
+            </Page>
+        )}
+
+        {hasAI && (
+            /* PAGE 7: 오프닝 한마디 + CTA */
+            <Page size="A4" style={styles.page}>
+                <Text style={styles.aiPageTitle}>Opening Tip.</Text>
+                <Text style={styles.aiSubtitle}>Opening AI의 창업 꿀팁</Text>
+
+                <View style={{ padding: 20, backgroundColor: '#F0F6FF', borderRadius: 6, marginBottom: 30 }}>
+                    <Text style={{ fontSize: 14, color: '#333333', lineHeight: 1.8, fontFamily: 'Noto Sans KR' }}>
+                        "{aiReport.openingTip}"
+                    </Text>
+                </View>
+
+                {/* 최종 요약 카드 */}
+                <View style={{ padding: 20, backgroundColor: '#FAFAFA', borderRadius: 6, marginBottom: 20 }}>
+                    <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#000', marginBottom: 8, fontFamily: 'Noto Sans KR' }}>
+                        {aiReport.summary.title}
+                    </Text>
+                    <View style={{ flexDirection: 'row', marginBottom: 8 }}>
+                        <View style={{ flex: 1 }}>
+                            <Text style={{ fontSize: 9, color: '#888', fontFamily: 'Noto Sans KR' }}>준비도 점수</Text>
+                            <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#1E6FFF', fontFamily: 'Noto Sans KR' }}>{aiReport.summary.overallScore}점</Text>
+                        </View>
+                        <View style={{ flex: 1 }}>
+                            <Text style={{ fontSize: 9, color: '#888', fontFamily: 'Noto Sans KR' }}>상권 등급</Text>
+                            <Text style={{ fontSize: 20, fontWeight: 'bold', color: getGradeColor(aiReport.locationAnalysis.grade), fontFamily: 'Noto Sans KR' }}>{aiReport.locationAnalysis.grade}등급</Text>
+                        </View>
+                        <View style={{ flex: 1 }}>
+                            <Text style={{ fontSize: 9, color: '#888', fontFamily: 'Noto Sans KR' }}>예상 기간</Text>
+                            <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#333', fontFamily: 'Noto Sans KR' }}>{aiReport.actionPlan.totalDuration}</Text>
+                        </View>
+                    </View>
+                </View>
+
+                {/* CTA */}
+                <View style={[styles.ctaBox, { marginTop: 20 }]}>
+                    <Text style={styles.ctaTitle}>오프닝과 함께 시작하세요</Text>
+                    <Text style={styles.ctaText}>
+                        이 보고서는 AI가 생성한 참고 자료입니다. 전담 매니저와 상담하시면 더욱 정밀한 맞춤 솔루션을 받으실 수 있습니다.
+                    </Text>
+                </View>
+
+                <View style={styles.footer}>
+                    <Text style={styles.footerText}>OPENING AI ANALYSIS</Text>
+                    <Text style={styles.footerText}>Page 7 / {totalPages}</Text>
+                </View>
+            </Page>
+        )}
     </Document>
-);
+    );
+};

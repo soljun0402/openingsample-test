@@ -1,0 +1,349 @@
+// AI 보고서 생성 파이프라인
+// Gemini 2.5 Flash API를 사용하여 창업 분석 보고서 생성
+
+import { MarketAnalysisData } from './seoulDataApi';
+
+// ─── 입력 타입 ───
+
+export interface AIReportInput {
+  business: {
+    category: string;
+    categoryLabel: string;
+  };
+  location: {
+    gu: string;
+    dong: string;
+  };
+  storeSize: number;
+  marketData: {
+    footTraffic: string;
+    footTrafficRaw: number;
+    competitors: number;
+    avgRent: number;
+    description: string;
+    population?: {
+      total: number;
+      male: number;
+      female: number;
+      age10: number;
+      age20: number;
+      age30: number;
+      age40: number;
+      age50: number;
+      age60plus: number;
+      daytime: number;
+      nighttime: number;
+    };
+  } | null;
+  estimatedCosts: { min: number; max: number };
+  checklist: {
+    id: string;
+    title: string;
+    category: string;
+    description: string;
+    status: 'done' | 'worry' | 'unchecked';
+    isRequired: boolean;
+    estimatedCost: { min: number; max: number; unit: string };
+    comment?: string;
+  }[];
+}
+
+// ─── 출력 타입 (PDF 디자이너용) ───
+
+export interface AIReportOutput {
+  summary: {
+    title: string;
+    oneLiner: string;
+    overallScore: number;
+    scoreLabel: string;
+    keyHighlights: string[];
+  };
+  locationAnalysis: {
+    grade: 'S' | 'A' | 'B' | 'C' | 'D';
+    gradeReason: string;
+    targetCustomer: string;
+    peakHours: string;
+    strengths: string[];
+    weaknesses: string[];
+    nearbyTip: string;
+  };
+  costAnalysis: {
+    totalComment: string;
+    savingTips: {
+      area: string;
+      tip: string;
+      savedAmount: string;
+    }[];
+    budgetPriority: string[];
+  };
+  checklistAdvice: {
+    itemId: string;
+    status: 'done' | 'worry' | 'unchecked';
+    advice: string;
+    actionSteps?: string[];
+    costTip?: string;
+    timeline?: string;
+  }[];
+  riskFactors: {
+    level: 'high' | 'medium' | 'low';
+    title: string;
+    description: string;
+    mitigation: string;
+  }[];
+  actionPlan: {
+    phases: {
+      phase: string;
+      duration: string;
+      tasks: string[];
+    }[];
+    totalDuration: string;
+  };
+  openingTip: string;
+}
+
+// ─── 시스템 프롬프트 ───
+
+const SYSTEM_PROMPT = `당신은 한국 소상공인 창업 전문 컨설턴트 'Opening AI'입니다.
+사용자가 제공한 창업 정보(업종, 위치, 매장 규모, 상권 데이터, 준비 체크리스트)를
+분석하여 맞춤형 창업 보고서 콘텐츠를 JSON으로 생성합니다.
+
+## 규칙
+1. 반드시 지정된 JSON 스키마로만 응답하세요. JSON 외 텍스트 금지.
+2. 모든 텍스트는 한국어로 작성하세요.
+3. 입력된 지역명, 업종, 상권 수치를 구체적으로 반영하세요.
+4. status가 "worry"인 항목은 실행 가능한 해결 방안을 반드시 제시하세요.
+5. 과장 없이 현실적이고 실행 가능한 조언만 제공하세요.
+6. 각 필드의 글자 수 제한을 지키세요.
+7. riskFactors는 반드시 해당 업종+지역 조합의 실질적 리스크만 포함하세요.`;
+
+const OUTPUT_SCHEMA_DESCRIPTION = `응답 JSON 스키마:
+{
+  "summary": {
+    "title": "string (30자 이내, 예: '역삼동 카페 창업 분석 보고서')",
+    "oneLiner": "string (50자 이내, 한 줄 핵심 요약)",
+    "overallScore": "number (0~100, 창업 준비도 점수)",
+    "scoreLabel": "string ('양호' | '보통' | '주의 필요')",
+    "keyHighlights": ["string (각 30자 이내, 3개)"]
+  },
+  "locationAnalysis": {
+    "grade": "'S' | 'A' | 'B' | 'C' | 'D'",
+    "gradeReason": "string (100자 이내)",
+    "targetCustomer": "string (50자 이내)",
+    "peakHours": "string (예: '점심 11~14시, 퇴근 후 18~21시')",
+    "strengths": ["string (각 40자 이내, 2~3개)"],
+    "weaknesses": ["string (각 40자 이내, 1~2개)"],
+    "nearbyTip": "string (80자 이내)"
+  },
+  "costAnalysis": {
+    "totalComment": "string (80자 이내)",
+    "savingTips": [{ "area": "string", "tip": "string (80자 이내)", "savedAmount": "string (예: '200~500만원')" }] (최대 3개),
+    "budgetPriority": ["string (각 40자 이내, 2개, 돈 아끼면 안 되는 항목)"]
+  },
+  "checklistAdvice": [{
+    "itemId": "string (입력 checklist[].id와 매칭)",
+    "status": "'done' | 'worry' | 'unchecked'",
+    "advice": "string (60자 이내)",
+    "actionSteps": ["string (각 50자 이내, 1~3개, worry 항목 전용)"],
+    "costTip": "string (50자 이내, 선택)",
+    "timeline": "string (예: '1~2주', 선택)"
+  }],
+  "riskFactors": [{
+    "level": "'high' | 'medium' | 'low'",
+    "title": "string (20자 이내)",
+    "description": "string (80자 이내)",
+    "mitigation": "string (80자 이내)"
+  }] (최대 3개),
+  "actionPlan": {
+    "phases": [{
+      "phase": "string (예: '1단계: 인허가 준비')",
+      "duration": "string (예: '1~2주')",
+      "tasks": ["string (각 30자 이내, 최대 4개)"]
+    }] (3~5단계),
+    "totalDuration": "string (예: '8~12주')"
+  },
+  "openingTip": "string (100자 이내, 업종 특화 창업 꿀팁)"
+}`;
+
+// ─── 입력 JSON 조합 함수 ───
+
+interface BuildReportInputParams {
+  businessCategory: string;
+  businessCategoryLabel: string;
+  selectedGu: string;
+  dong: string;
+  storeSize: number | '';
+  marketData: MarketAnalysisData | null;
+  estimatedCosts: { min: number; max: number };
+  checklist: {
+    id: string;
+    category: string;
+    title: string;
+    description: string;
+    status: 'done' | 'worry' | 'unchecked';
+    isRequired: boolean;
+    estimatedCost: { min: number; max: number; unit: string };
+    comment?: string;
+  }[];
+}
+
+export function buildReportInput(params: BuildReportInputParams): AIReportInput {
+  const {
+    businessCategory,
+    businessCategoryLabel,
+    selectedGu,
+    dong,
+    storeSize,
+    marketData,
+    estimatedCosts,
+    checklist,
+  } = params;
+
+  const storeSizeNum = typeof storeSize === 'number' ? storeSize : 17;
+
+  return {
+    business: {
+      category: businessCategory,
+      categoryLabel: businessCategoryLabel,
+    },
+    location: {
+      gu: selectedGu,
+      dong,
+    },
+    storeSize: storeSizeNum,
+    marketData: marketData
+      ? {
+          footTraffic: marketData.footTraffic,
+          footTrafficRaw: marketData.footTrafficRaw,
+          competitors: marketData.competitors,
+          avgRent: marketData.avgRent,
+          description: marketData.description,
+          population: marketData.population
+            ? {
+                total: marketData.population.total,
+                male: marketData.population.male,
+                female: marketData.population.female,
+                age10: marketData.population.age10,
+                age20: marketData.population.age20,
+                age30: marketData.population.age30,
+                age40: marketData.population.age40,
+                age50: marketData.population.age50,
+                age60plus: marketData.population.age60plus,
+                daytime: marketData.population.daytime,
+                nighttime: marketData.population.nighttime,
+              }
+            : undefined,
+        }
+      : null,
+    estimatedCosts,
+    checklist: checklist.map((item) => ({
+      id: item.id,
+      title: item.title,
+      category: item.category,
+      description: item.description,
+      status: item.status,
+      isRequired: item.isRequired,
+      estimatedCost: item.estimatedCost,
+      comment: item.comment,
+    })),
+  };
+}
+
+// ─── Gemini API 호출 ───
+
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
+const GEMINI_TIMEOUT = 15000; // 15초
+
+export async function generateAIReport(input: AIReportInput): Promise<AIReportOutput | null> {
+  if (!GEMINI_API_KEY) {
+    console.warn('VITE_GEMINI_API_KEY가 설정되지 않았습니다. AI 보고서를 건너뜁니다.');
+    return null;
+  }
+
+  const userMessage = `다음 창업 정보를 분석하여 보고서 JSON을 생성해주세요.
+
+## 입력 데이터
+${JSON.stringify(input)}
+
+## 응답 형식
+${OUTPUT_SCHEMA_DESCRIPTION}`;
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), GEMINI_TIMEOUT);
+
+  try {
+    const apiUrl = import.meta.env.DEV
+      ? '/api/gemini/v1beta/models/gemini-2.5-flash:generateContent'
+      : `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`;
+
+    const res = await fetch(`${apiUrl}?key=${GEMINI_API_KEY}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: controller.signal,
+      body: JSON.stringify({
+        contents: [
+          {
+            role: 'user',
+            parts: [{ text: userMessage }],
+          },
+        ],
+        systemInstruction: {
+          parts: [{ text: SYSTEM_PROMPT }],
+        },
+        generationConfig: {
+          temperature: 0.7,
+          topP: 0.9,
+          responseMimeType: 'application/json',
+        },
+      }),
+    });
+
+    if (!res.ok) {
+      console.error('Gemini API 오류:', res.status, await res.text());
+      return null;
+    }
+
+    const data = await res.json();
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (!text) {
+      console.error('Gemini 응답에 텍스트가 없습니다:', data);
+      return null;
+    }
+
+    // LLM이 가끔 markdown 코드 펜스를 포함할 수 있으므로 제거
+    const cleanText = text.replace(/^```json\s*\n?/i, '').replace(/\n?```\s*$/i, '');
+
+    let parsed: AIReportOutput;
+    try {
+      parsed = JSON.parse(cleanText);
+    } catch (parseErr) {
+      console.error('AI 응답 JSON 파싱 실패:', parseErr, 'Raw:', text.slice(0, 300));
+      return null;
+    }
+
+    // 유효성 검증
+    if (
+      !parsed.summary?.title ||
+      typeof parsed.summary?.overallScore !== 'number' ||
+      !parsed.locationAnalysis?.grade ||
+      !parsed.costAnalysis ||
+      !Array.isArray(parsed.checklistAdvice) ||
+      !Array.isArray(parsed.riskFactors) ||
+      !parsed.actionPlan?.phases
+    ) {
+      console.error('AI 응답 구조가 올바르지 않습니다:', Object.keys(parsed));
+      return null;
+    }
+
+    return parsed;
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      console.warn('Gemini API 타임아웃 (15초 초과)');
+    } else {
+      console.error('AI 보고서 생성 실패:', err);
+    }
+    return null;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
