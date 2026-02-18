@@ -29,15 +29,15 @@ const formatCurrency = (amount: number) => {
 
 // AI 로딩 단계 정의
 const AI_STEPS = [
-    { label: '입력 데이터 구조화 중', threshold: 5 },
-    { label: '상권 데이터 분석 중', threshold: 15 },
-    { label: 'AI 모델에 전송 중', threshold: 25 },
-    { label: 'AI가 상권 등급을 평가하고 있습니다', threshold: 35 },
-    { label: 'AI가 비용 절감 포인트를 찾고 있습니다', threshold: 50 },
-    { label: 'AI가 체크리스트별 조언을 생성하고 있습니다', threshold: 65 },
-    { label: 'AI가 리스크 요인을 분석하고 있습니다', threshold: 75 },
-    { label: 'AI가 실행 로드맵을 작성하고 있습니다', threshold: 85 },
-    { label: '보고서를 최종 검증하고 있습니다', threshold: 95 },
+    { label: '사장님 정보를 꼼꼼히 읽고 있어요', threshold: 5 },
+    { label: '동네 상권을 샅샅이 훑어보는 중...', threshold: 15 },
+    { label: 'AI 컨설턴트에게 보고서를 맡기는 중', threshold: 25 },
+    { label: '이 동네, 장사 될까? 등급 매기는 중', threshold: 35 },
+    { label: '아낄 수 있는 돈은 없는지 찾고 있어요', threshold: 50 },
+    { label: '체크리스트 하나하나 꿀팁 적는 중', threshold: 65 },
+    { label: '혹시 모를 위험 요소 점검 중...', threshold: 75 },
+    { label: '오픈까지 실전 로드맵 그리는 중', threshold: 85 },
+    { label: '마지막 퇴고 중... 거의 다 됐어요!', threshold: 95 },
 ];
 
 export const EstimateResultView: React.FC<EstimateResultViewProps> = ({ data, onBack, aiLoading = false }) => {
@@ -65,8 +65,8 @@ export const EstimateResultView: React.FC<EstimateResultViewProps> = ({ data, on
 
                 if (aiLoading) {
                     // AI 로딩 중 → 90%까지 천천히 (실제 시간 비례)
-                    // 15초 타임아웃 기준, 초당 ~6%
-                    const target = Math.min(90, elapsed * 6);
+                    // 30초 타임아웃 기준, 초당 ~3%
+                    const target = Math.min(90, elapsed * 3);
                     if (prev < target) {
                         return Math.min(prev + 1.5, target);
                     }
@@ -153,19 +153,19 @@ export const EstimateResultView: React.FC<EstimateResultViewProps> = ({ data, on
                 <div className="space-y-2.5 w-full max-w-xs text-left">
                     <div className={`flex items-center gap-3 transition-all duration-500 ${progress > 5 ? 'opacity-100' : 'opacity-20'}`}>
                         {progress > 25 ? <CheckCircle2 size={16} className="text-green-500 shrink-0" /> : <Loader2 size={16} className="text-brand-400 animate-spin shrink-0" />}
-                        <span className="text-sm">입력 데이터 구조화</span>
+                        <span className="text-sm">사장님 데이터 수집 완료</span>
                     </div>
                     <div className={`flex items-center gap-3 transition-all duration-500 ${progress > 25 ? 'opacity-100' : 'opacity-20'}`}>
                         {progress > 50 ? <CheckCircle2 size={16} className="text-green-500 shrink-0" /> : progress > 25 ? <Loader2 size={16} className="text-brand-400 animate-spin shrink-0" /> : <div className="w-4 h-4 rounded-full border-2 border-gray-200 shrink-0" />}
-                        <span className="text-sm">AI 상권 분석 & 비용 산출</span>
+                        <span className="text-sm">상권 분석 & 절약 포인트 탐색</span>
                     </div>
                     <div className={`flex items-center gap-3 transition-all duration-500 ${progress > 50 ? 'opacity-100' : 'opacity-20'}`}>
                         {progress > 75 ? <CheckCircle2 size={16} className="text-green-500 shrink-0" /> : progress > 50 ? <Loader2 size={16} className="text-brand-400 animate-spin shrink-0" /> : <div className="w-4 h-4 rounded-full border-2 border-gray-200 shrink-0" />}
-                        <span className="text-sm">체크리스트 조언 & 리스크 분석</span>
+                        <span className="text-sm">맞춤 조언 & 리스크 체크</span>
                     </div>
                     <div className={`flex items-center gap-3 transition-all duration-500 ${progress > 75 ? 'opacity-100' : 'opacity-20'}`}>
                         {progress >= 95 ? <CheckCircle2 size={16} className="text-green-500 shrink-0" /> : progress > 75 ? <Loader2 size={16} className="text-brand-400 animate-spin shrink-0" /> : <div className="w-4 h-4 rounded-full border-2 border-gray-200 shrink-0" />}
-                        <span className="text-sm">실행 로드맵 작성 & 최종 검증</span>
+                        <span className="text-sm">오픈 로드맵 완성 & 최종 검수</span>
                     </div>
                 </div>
 
@@ -226,8 +226,8 @@ export const EstimateResultView: React.FC<EstimateResultViewProps> = ({ data, on
 
                         <div className="space-y-4 mb-8">
                             <div className="flex justify-between items-center">
-                                <span className="text-gray-600">예상 창업 비용</span>
-                                <span className="text-brand-600 font-bold text-xl">
+                                <span className="text-gray-600 shrink-0">예상 창업 비용</span>
+                                <span className="text-brand-600 font-bold text-lg text-right whitespace-nowrap">
                                     {formatCurrency(data.totalCostRange.min)} ~ {formatCurrency(data.totalCostRange.max)}
                                 </span>
                             </div>

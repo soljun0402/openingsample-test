@@ -252,7 +252,7 @@ export function buildReportInput(params: BuildReportInputParams): AIReportInput 
 // ─── Gemini API 호출 ───
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
-const GEMINI_TIMEOUT = 15000; // 15초
+const GEMINI_TIMEOUT = 30000; // 30초
 
 export async function generateAIReport(input: AIReportInput): Promise<AIReportOutput | null> {
   if (!GEMINI_API_KEY) {
