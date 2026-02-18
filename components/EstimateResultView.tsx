@@ -238,18 +238,43 @@ export const EstimateResultView: React.FC<EstimateResultViewProps> = ({ data, on
                                 </span>
                             </div>
                             {hasAI && (
-                                <>
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-gray-600">AI 준비도 점수</span>
-                                        <span className="text-brand-600 font-bold">{data.aiReport!.summary.overallScore}점</span>
-                                    </div>
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-gray-600">상권 등급</span>
-                                        <span className="text-brand-600 font-bold">{data.aiReport!.locationAnalysis.grade}등급</span>
-                                    </div>
-                                </>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-gray-600">AI 종합 점수</span>
+                                    <span className={`font-bold ${
+                                        data.aiReport!.summary.overallScore >= 80 ? 'text-green-600' :
+                                        data.aiReport!.summary.overallScore >= 60 ? 'text-blue-600' :
+                                        'text-orange-500'
+                                    }`}>{data.aiReport!.summary.overallScore}점</span>
+                                </div>
                             )}
                         </div>
+
+                        {/* 상권 등급 블럭 */}
+                        {hasAI && (
+                            <div className={`rounded-xl p-4 mb-4 border ${
+                                ['S', 'A'].includes(data.aiReport!.locationAnalysis.grade)
+                                    ? 'bg-green-50 border-green-200'
+                                    : data.aiReport!.locationAnalysis.grade === 'B'
+                                    ? 'bg-blue-50 border-blue-200'
+                                    : 'bg-orange-50 border-orange-200'
+                            }`}>
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center font-black text-xl text-white ${
+                                        data.aiReport!.locationAnalysis.grade === 'S' ? 'bg-gradient-to-br from-yellow-400 to-orange-500' :
+                                        data.aiReport!.locationAnalysis.grade === 'A' ? 'bg-green-500' :
+                                        data.aiReport!.locationAnalysis.grade === 'B' ? 'bg-blue-500' :
+                                        data.aiReport!.locationAnalysis.grade === 'C' ? 'bg-orange-500' :
+                                        'bg-red-500'
+                                    }`}>
+                                        {data.aiReport!.locationAnalysis.grade}
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="text-sm font-bold text-gray-800">상권 등급</p>
+                                        <p className="text-xs text-gray-500 mt-0.5">{data.aiReport!.locationAnalysis.gradeReason}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         <div className="bg-gray-50 rounded-xl p-4 mb-6 text-sm text-gray-600 leading-relaxed border border-gray-100">
                             {hasAI
