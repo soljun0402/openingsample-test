@@ -190,7 +190,8 @@ export const EstimateResultView: React.FC<EstimateResultViewProps> = ({ data, on
     const hasAI = !!data.aiReport;
     const score = hasAI ? data.aiReport!.summary.overallScore : 0;
     const scoreStyle = getScoreColor(score);
-    const gradeStyle = hasAI ? getGradeStyle(data.aiReport!.locationAnalysis.grade) : null;
+    const displayGrade = hasAI ? data.aiReport!.locationAnalysis.grade : (data.marketGrade || 'B');
+    const gradeStyle = getGradeStyle(displayGrade);
 
     return (
         <div className="fixed inset-0 bg-slate-50 z-50 overflow-y-auto animate-in fade-in duration-500">
@@ -251,7 +252,7 @@ export const EstimateResultView: React.FC<EstimateResultViewProps> = ({ data, on
                                 {/* 상권등급 + 라벨 */}
                                 <div className="flex-1">
                                     <div className="flex items-center gap-2.5 mb-2">
-                                        <div className={`w-10 h-10 rounded-xl ${gradeStyle!.bg} flex items-center justify-center shadow-sm`}>
+                                        <div className={`w-10 h-10 rounded-xl ${gradeStyle.bg} flex items-center justify-center shadow-sm`}>
                                             <span className="text-lg font-black text-white">{data.aiReport!.locationAnalysis.grade}</span>
                                         </div>
                                         <div>
@@ -287,9 +288,38 @@ export const EstimateResultView: React.FC<EstimateResultViewProps> = ({ data, on
                             </div>
                         </div>
                     ) : (
-                        <div className="bg-white rounded-2xl shadow-lg border p-5 mb-4 text-center ring-1 ring-slate-100">
-                            <CheckCircle2 size={32} className="text-emerald-500 mx-auto mb-2" />
-                            <p className="font-bold text-slate-800">견적 분석 완료</p>
+                        <div className="bg-white rounded-2xl shadow-lg border p-5 mb-4 ring-1 ring-slate-100">
+                            <div className="flex items-center gap-4 mb-4">
+                                {/* 상권 등급 */}
+                                <div className={`w-20 h-20 rounded-2xl ${gradeStyle.bg} flex items-center justify-center shadow-md shrink-0`}>
+                                    <span className="text-4xl font-black text-white drop-shadow-sm">{displayGrade}</span>
+                                </div>
+                                <div className="flex-1">
+                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">상권 등급</p>
+                                    <p className={`text-lg font-bold ${gradeStyle.text}`}>
+                                        {displayGrade === 'S' ? '최고 입지' :
+                                         displayGrade === 'A' ? '우수 입지' :
+                                         displayGrade === 'B' ? '양호 입지' :
+                                         displayGrade === 'C' ? '보통 입지' : '주의 필요'}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* 간이 종합 점수 */}
+                            {data.simpleScore != null && (
+                                <div className="border-t border-slate-100 pt-4">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className="text-sm font-bold text-slate-700">종합 점수</span>
+                                        <span className={`text-2xl font-black ${getScoreColor(data.simpleScore).text}`}>{data.simpleScore}<span className="text-sm text-slate-400 font-medium">점</span></span>
+                                    </div>
+                                    <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden mb-3">
+                                        <div className={`h-full rounded-full ${getScoreColor(data.simpleScore).bg} transition-all`} style={{ width: `${data.simpleScore}%` }} />
+                                    </div>
+                                    {data.simpleComment && (
+                                        <p className="text-xs text-slate-500 leading-relaxed">{data.simpleComment}</p>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     )}
 
@@ -309,12 +339,12 @@ export const EstimateResultView: React.FC<EstimateResultViewProps> = ({ data, on
                     {hasAI && (
                         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mb-4">
                             {/* 헤더: 등급 배지 + 근거 */}
-                            <div className={`px-4 py-3.5 flex items-center gap-3 ${gradeStyle!.light} border-b ${gradeStyle!.border}`}>
-                                <div className={`w-11 h-11 rounded-xl ${gradeStyle!.bg} flex items-center justify-center shadow-sm shrink-0`}>
+                            <div className={`px-4 py-3.5 flex items-center gap-3 ${gradeStyle.light} border-b ${gradeStyle.border}`}>
+                                <div className={`w-11 h-11 rounded-xl ${gradeStyle.bg} flex items-center justify-center shadow-sm shrink-0`}>
                                     <span className="text-lg font-black text-white">{data.aiReport!.locationAnalysis.grade}</span>
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className={`text-sm font-bold ${gradeStyle!.text}`}>
+                                    <p className={`text-sm font-bold ${gradeStyle.text}`}>
                                         {data.aiReport!.locationAnalysis.grade === 'S' ? '최고 입지' :
                                          data.aiReport!.locationAnalysis.grade === 'A' ? '우수 입지' :
                                          data.aiReport!.locationAnalysis.grade === 'B' ? '양호 입지' :

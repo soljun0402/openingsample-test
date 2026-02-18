@@ -345,6 +345,10 @@ export interface EstimatePDFProps {
     checklist: ChecklistData;
     projectName?: string;
     aiReport?: AIReportOutput;
+    businessType?: string;
+    marketGrade?: 'S' | 'A' | 'B' | 'C' | 'D';
+    simpleScore?: number;
+    simpleComment?: string;
 }
 
 // Helper

@@ -1997,8 +1997,45 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
                 const storeSizeNum = typeof storeSize === 'number' ? storeSize : 17;
                 const categoryLabel = BUSINESS_CATEGORIES.find(c => c.id === businessCategory)?.label || '매장';
 
+                // 간이 상권 등급 계산 (marketData 기반)
+                const calcMarketGrade = (): 'S' | 'A' | 'B' | 'C' | 'D' => {
+                  if (!marketData) return 'C';
+                  let score = 50;
+                  // 유동인구 점수
+                  if (marketData.footTrafficRaw > 100000) score += 20;
+                  else if (marketData.footTrafficRaw > 50000) score += 10;
+                  else if (marketData.footTrafficRaw < 10000) score -= 10;
+                  // 경쟁 점포 (적을수록 좋음)
+                  if (marketData.competitors < 5) score += 15;
+                  else if (marketData.competitors < 15) score += 5;
+                  else if (marketData.competitors > 30) score -= 10;
+                  // 임대료 (저렴할수록 좋음)
+                  if (marketData.avgRent > 0 && marketData.avgRent < 100) score += 10;
+                  else if (marketData.avgRent > 300) score -= 10;
+                  if (score >= 80) return 'S';
+                  if (score >= 65) return 'A';
+                  if (score >= 50) return 'B';
+                  if (score >= 35) return 'C';
+                  return 'D';
+                };
+
+                // 간이 종합 점수 계산 (체크리스트 + 상권)
+                const doneRatio = checklist.filter(i => i.status === 'done').length / Math.max(checklist.length, 1);
+                const gradeVal = calcMarketGrade();
+                const gradeScore = gradeVal === 'S' ? 95 : gradeVal === 'A' ? 80 : gradeVal === 'B' ? 65 : gradeVal === 'C' ? 50 : 35;
+                const simpleScore = Math.round(gradeScore * 0.6 + doneRatio * 100 * 0.4);
+                const simpleComment = simpleScore >= 75
+                  ? `${dong} ${categoryLabel} 창업, 좋은 조건입니다! 세부 준비를 마무리하세요.`
+                  : simpleScore >= 55
+                  ? `${dong} 상권은 무난합니다. 미비한 항목을 보완하면 더 좋아집니다.`
+                  : `준비가 더 필요합니다. 체크리스트를 하나씩 해결해 보세요.`;
+
                 const data: EstimatePDFProps = {
                   customerName: '예비 창업자',
+                  businessType: categoryLabel,
+                  marketGrade: gradeVal,
+                  simpleScore,
+                  simpleComment,
                   totalCostRange: {
                     min: estimatedCosts.min * 10000,
                     max: estimatedCosts.max * 10000,
