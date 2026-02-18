@@ -1934,10 +1934,11 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
                     {categoryItems.map((item, idx) => (
                       <div
                         key={item.id}
-                        className={`w-full flex items-center gap-2.5 px-4 py-3 transition-all ${
+                        className={`w-full px-4 py-3 transition-all ${
                           idx > 0 ? 'border-t border-slate-50' : ''
                         }`}
                       >
+                        <div className="flex items-center gap-2.5">
                         {/* 항목명 */}
                         <p className={`flex-1 text-[13px] font-bold leading-tight min-w-0 ${
                           item.status === 'done' ? 'text-green-700' :
@@ -1966,6 +1967,8 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
                         >
                           ⚠ 도움
                         </button>
+                        </div>
+                        <p className="text-[11px] text-slate-400 mt-1 leading-snug">{item.description}</p>
                       </div>
                     ))}
                   </div>

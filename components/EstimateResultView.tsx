@@ -79,7 +79,8 @@ export const EstimateResultView: React.FC<EstimateResultViewProps> = ({ data, on
                 }
 
                 if (aiLoading) {
-                    const target = Math.min(90, elapsed * 3);
+                    // 40초 타임아웃 기준, 초당 ~2.25%
+                    const target = Math.min(90, elapsed * 2.25);
                     if (prev < target) {
                         return Math.min(prev + 1.5, target);
                     }
