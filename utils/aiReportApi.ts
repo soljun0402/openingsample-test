@@ -354,7 +354,7 @@ ${OUTPUT_SCHEMA_DESCRIPTION}`;
     return parsed;
   } catch (err) {
     if (err instanceof DOMException && err.name === 'AbortError') {
-      console.warn('Gemini API 타임아웃 (15초 초과)');
+      console.warn('Gemini API 타임아웃 (40초 초과)');
     } else {
       console.error('AI 보고서 생성 실패:', err);
     }
