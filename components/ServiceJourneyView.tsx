@@ -762,7 +762,7 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
 
     setLoading(true);
 
-    const worryItems = checklist.filter(i => i.status === 'worry').map(i => i.title);
+    const worryItems = checklist.filter(i => i.status !== 'done').map(i => i.title);
     const doneItems = checklist.filter(i => i.status === 'done').map(i => i.title);
     const category = BUSINESS_CATEGORIES.find(c => c.id === businessCategory);
 
@@ -1276,9 +1276,7 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
                       <div key={item.id} className="flex items-center justify-between py-2 border-b border-gray-100">
                         <div className="flex items-center gap-2">
                           <span className="text-gray-600">{item.title}</span>
-                          {item.status === 'worry' && (
-                            <span className="text-xs bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded font-bold">도움필요</span>
-                          )}
+                          <span className="text-xs bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded font-bold">도움필요</span>
                         </div>
                         <span className="font-medium text-gray-800">
                           {min > 0 ? `${formatPriceMan(min)} ~ ${formatPriceMan(max)}원` : '무료'}
@@ -1298,11 +1296,11 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
                   )}
 
                   {/* 도움 필요 항목 요약 */}
-                  {checklist.filter(i => i.status === 'worry').length > 0 && (
+                  {checklist.filter(i => i.status !== 'done').length > 0 && (
                     <div className="pt-2 mt-2 bg-orange-50 -mx-4 px-4 py-3 border-t border-orange-100">
                       <p className="text-xs text-orange-700 font-bold mb-1">⚠️ PM이 중점 지원할 항목</p>
                       <div className="flex flex-wrap gap-1 mt-1">
-                        {checklist.filter(i => i.status === 'worry').map(item => (
+                        {checklist.filter(i => i.status !== 'done').map(item => (
                           <span key={item.id} className="text-xs bg-white text-orange-700 px-2 py-0.5 rounded-full border border-orange-200">
                             {item.title}
                           </span>
@@ -1920,10 +1918,10 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
 
             {/* 범례 */}
             <div className="flex gap-4 justify-center">
-              <span className="flex items-center gap-1.5 text-xs text-slate-400"><span className="w-2.5 h-2.5 rounded-full bg-slate-200" /> 미확인</span>
               <span className="flex items-center gap-1.5 text-xs text-green-600"><span className="w-2.5 h-2.5 rounded-full bg-green-500" /> 준비됨</span>
               <span className="flex items-center gap-1.5 text-xs text-orange-500"><span className="w-2.5 h-2.5 rounded-full bg-orange-400" /> 도움필요</span>
             </div>
+            <p className="text-center text-xs text-slate-400">탭하여 준비된 항목을 체크하세요</p>
 
             {['행정/서류', '인테리어/공사', '장비/세팅', '매니저 지원'].map(category => {
               const categoryItems = checklist.filter(item => item.category === category);
@@ -1937,7 +1935,7 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
                       <button
                         key={item.id}
                         onClick={() => {
-                          const next = item.status === 'unchecked' ? 'done' : item.status === 'done' ? 'worry' : 'unchecked';
+                          const next = item.status === 'done' ? 'unchecked' : 'done';
                           toggleChecklistItem(item.id, next);
                         }}
                         className={`w-full flex items-center gap-3 px-4 py-3.5 text-left transition-all active:bg-slate-50 ${
@@ -1946,33 +1944,25 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
                       >
                         {/* 상태 인디케이터 */}
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all ${
-                          item.status === 'done' ? 'bg-green-500 text-white' :
-                          item.status === 'worry' ? 'bg-orange-400 text-white' :
-                          'bg-slate-100 text-slate-300'
+                          item.status === 'done' ? 'bg-green-500 text-white' : 'bg-orange-100 text-orange-400'
                         }`}>
-                          {item.status === 'done' ? <Check size={16} /> :
-                           item.status === 'worry' ? <AlertTriangle size={14} /> :
-                           <span className="w-2 h-2 rounded-full bg-slate-300" />}
+                          {item.status === 'done' ? <Check size={16} /> : <AlertTriangle size={14} />}
                         </div>
 
                         {/* 텍스트 */}
                         <div className="flex-1 min-w-0">
                           <p className={`text-[13px] font-bold leading-tight ${
-                            item.status === 'done' ? 'text-green-700' :
-                            item.status === 'worry' ? 'text-orange-600' :
-                            'text-slate-800'
+                            item.status === 'done' ? 'text-green-700' : 'text-orange-600'
                           }`}>{item.title}</p>
                           <p className="text-xs text-slate-400 mt-0.5">{item.description}</p>
                         </div>
 
                         {/* 상태 라벨 */}
-                        {item.status !== 'unchecked' && (
-                          <span className={`text-xs font-bold px-2 py-1 rounded-full shrink-0 ${
-                            item.status === 'done' ? 'bg-green-50 text-green-600' : 'bg-orange-50 text-orange-500'
-                          }`}>
-                            {item.status === 'done' ? '준비됨' : '도움필요'}
-                          </span>
-                        )}
+                        <span className={`text-xs font-bold px-2 py-1 rounded-full shrink-0 ${
+                          item.status === 'done' ? 'bg-green-50 text-green-600' : 'bg-orange-50 text-orange-500'
+                        }`}>
+                          {item.status === 'done' ? '준비됨' : '도움필요'}
+                        </span>
                       </button>
                     ))}
                   </div>
@@ -2032,8 +2022,8 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
                   ],
                   checklist: {
                     readyCount: checklist.filter(i => i.status === 'done').length,
-                    worryCount: checklist.filter(i => i.status === 'worry').length,
-                    worryItems: checklist.filter(i => i.status === 'worry').map(i => i.title),
+                    worryCount: checklist.filter(i => i.status !== 'done').length,
+                    worryItems: checklist.filter(i => i.status !== 'done').map(i => i.title),
                     readyItems: checklist.filter(i => i.status === 'done').map(i => i.title),
                   },
                   projectName: `${dong} ${categoryLabel} 창업`,
@@ -2103,8 +2093,8 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
                         {isPerPyung && (
                           <span className="text-[10px] text-gray-400">({item.estimatedCost.min}~{item.estimatedCost.max}{item.estimatedCost.unit} × {storeSize}평)</span>
                         )}
-                        {item.status === 'worry' && (
-                          <span className="text-xs bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded font-bold">걱정</span>
+                        {item.status !== 'done' && (
+                          <span className="text-xs bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded font-bold">도움필요</span>
                         )}
                       </div>
                       <span className="font-bold text-sm">
@@ -2137,10 +2127,8 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
                         <td className="px-3 py-2 text-center whitespace-nowrap">
                           {item.status === 'done' ? (
                             <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[11px] font-bold bg-green-100 text-green-700">✓ 준비됨</span>
-                          ) : item.status === 'worry' ? (
-                            <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[11px] font-bold bg-orange-100 text-orange-700">⚠ 도움필요</span>
                           ) : (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-gray-100 text-gray-500">—</span>
+                            <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[11px] font-bold bg-orange-100 text-orange-700">⚠ 도움필요</span>
                           )}
                         </td>
                         <td className="px-4 py-2 text-gray-600 text-xs">{item.comment || '-'}</td>
@@ -2157,7 +2145,7 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
                 </table>
               </div>
               <div className="px-4 py-2 bg-gray-50 border-t text-xs text-gray-500">
-                총 {checklist.filter(i => i.status === 'done').length}개 준비 완료 / {checklist.filter(i => i.status === 'worry').length}개 도움 필요 / {checklist.filter(i => i.status === 'unchecked').length}개 미체크
+                총 {checklist.filter(i => i.status === 'done').length}개 준비 완료 / {checklist.filter(i => i.status !== 'done').length}개 도움 필요
               </div>
             </div>
 
@@ -2172,12 +2160,12 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
               />
             </div>
 
-            {/* 걱정 항목 요약 */}
-            {checklist.filter(i => i.status === 'worry').length > 0 && (
+            {/* 도움 필요 항목 요약 */}
+            {checklist.filter(i => i.status !== 'done').length > 0 && (
               <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
                 <h3 className="font-bold text-sm text-orange-800 mb-2">⚠️ PM이 중점 지원할 항목</h3>
                 <div className="flex flex-wrap gap-2">
-                  {checklist.filter(i => i.status === 'worry').map(item => (
+                  {checklist.filter(i => i.status !== 'done').map(item => (
                     <span key={item.id} className="px-3 py-1 bg-white text-orange-700 rounded-full text-sm font-medium border border-orange-200">
                       {item.title}
                     </span>

@@ -240,7 +240,8 @@ export function buildReportInput(params: BuildReportInputParams): AIReportInput 
       title: item.title,
       category: item.category,
       description: item.description,
-      status: item.status,
+      // unchecked = 도움필요로 AI에게 전달
+      status: item.status === 'done' ? 'done' as const : 'worry' as const,
       isRequired: item.isRequired,
       estimatedCost: item.estimatedCost,
       comment: item.comment,
