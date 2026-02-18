@@ -114,13 +114,23 @@ export const EstimatePDFDocument: React.FC<EstimatePDFProps> = ({
             <Text style={{ fontSize: 8, color: '#999', marginBottom: 2, fontFamily: F }}>
                 {customerName} | {new Date().toLocaleDateString('ko-KR')}
             </Text>
-            {hasAI && <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#333', marginBottom: 12, fontFamily: F }}>{ai.summary.title}</Text>}
-            {!hasAI && <View style={{ marginBottom: 12 }} />}
+            {hasAI && <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#333', marginBottom: 6, fontFamily: F }}>{ai.summary.title}</Text>}
+            {!hasAI && <View style={{ marginBottom: 6 }} />}
 
-            {/* 한 줄 요약 + 비용 */}
-            <Text style={{ fontSize: 11, color: '#333', lineHeight: 1.4, marginBottom: 8, fontFamily: F }}>
-                {hasAI ? cut(ai.summary.oneLiner, 80) : '창업이라는 긴 여정, 오프닝이 가장 든든한 페이스메이커가 되어 드릴게요.'}
-            </Text>
+            {/* 종합 의견 */}
+            {hasAI && ai.summary.overallComment && (
+                <View style={{ padding: 10, backgroundColor: BG, borderRadius: 4, borderLeftWidth: 3, borderLeftColor: BRAND, marginBottom: 10 }}>
+                    <Text style={{ fontSize: 7.5, fontWeight: 'bold', color: BRAND, marginBottom: 3, fontFamily: F }}>종합 의견</Text>
+                    <Text style={{ fontSize: 8.5, color: '#333', lineHeight: 1.6, fontFamily: F }}>{cut(ai.summary.overallComment, 200)}</Text>
+                </View>
+            )}
+
+            {/* 한 줄 요약 (AI 없을 때) */}
+            {!hasAI && (
+                <Text style={{ fontSize: 11, color: '#333', lineHeight: 1.4, marginBottom: 8, fontFamily: F }}>
+                    창업이라는 긴 여정, 오프닝이 가장 든든한 페이스메이커가 되어 드릴게요.
+                </Text>
+            )}
             <Text style={{ fontSize: 20, fontWeight: 'bold', color: BRAND, marginBottom: 2, fontFamily: F }}>
                 {fmt(totalCostRange.min)} ~ {fmt(totalCostRange.max)}
             </Text>

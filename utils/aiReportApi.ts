@@ -54,6 +54,7 @@ export interface AIReportOutput {
   summary: {
     title: string;
     oneLiner: string;
+    overallComment: string;
     overallScore: number;
     scoreLabel: string;
     keyHighlights: string[];
@@ -145,6 +146,7 @@ const OUTPUT_SCHEMA_DESCRIPTION = `응답 JSON 스키마:
   "summary": {
     "title": "string (30자 이내, 예: '역삼동 카페 창업 분석 보고서')",
     "oneLiner": "string (80자 이내, 핵심 요약 — 구체적 수치와 근거를 포함해 한 문장으로)",
+    "overallComment": "string (200자 이내, 종합 의견 — 이 업종+지역 조합에 대한 전문 컨설턴트의 전반적 평가. 강점·약점·핵심 조언을 2~3문장으로 구체적으로 서술)",
     "overallScore": "number (40~95, 창업 잠재력 종합 점수)",
     "scoreLabel": "string ('양호' | '보통' | '주의 필요')",
     "keyHighlights": ["string (각 50자 이내, 정확히 4개 — 입지/경쟁/비용/준비 관점에서 하나씩)"]
