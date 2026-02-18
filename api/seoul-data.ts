@@ -35,6 +35,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (isNaN(startNum) || isNaN(endNum) || startNum < 1 || endNum < startNum) {
     return res.status(400).json({ error: 'Invalid range' });
   }
+  if (endNum - startNum >= 1000) {
+    return res.status(400).json({ error: 'Range too large (max 1000)' });
+  }
 
   if (!SEOUL_API_KEY) {
     return res.status(500).json({ error: 'Seoul API key not configured' });

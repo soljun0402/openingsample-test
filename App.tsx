@@ -246,8 +246,8 @@ function App() {
   const handleAdminLogin = async (email: string, password: string): Promise<boolean> => {
     await supabase.auth.signOut();
 
-    const ADMIN_PW = 'epdlfflalf1!';
-    const PM_PW = 'epdlfflalf1!';
+    const ADMIN_PW = (import.meta as any).env?.VITE_ADMIN_PW || '';
+    const PM_PW = (import.meta as any).env?.VITE_PM_PW || '';
 
     // Admin 로그인 — Supabase Auth로 실제 인증 (DB 쓰기 권한 필요)
     if (email === 'admin' && password === ADMIN_PW) {

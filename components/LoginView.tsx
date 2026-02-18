@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { supabase } from '../utils/supabaseClient';
 import { DoorOpen, ArrowRight, ArrowLeft, Lock, Mail, Loader2, Sparkles, Phone, User, ChevronDown, CheckCircle, RefreshCw } from 'lucide-react';
 
@@ -33,6 +33,11 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, onGuestBro
   const [showVerification, setShowVerification] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
+  const cooldownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    return () => { if (cooldownTimerRef.current) clearInterval(cooldownTimerRef.current); };
+  }, []);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -126,9 +131,10 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, onGuestBro
 
   const startResendCooldown = () => {
     setResendCooldown(60);
-    const timer = setInterval(() => {
+    if (cooldownTimerRef.current) clearInterval(cooldownTimerRef.current);
+    cooldownTimerRef.current = setInterval(() => {
       setResendCooldown(prev => {
-        if (prev <= 1) { clearInterval(timer); return 0; }
+        if (prev <= 1) { clearInterval(cooldownTimerRef.current!); cooldownTimerRef.current = null; return 0; }
         return prev - 1;
       });
     }, 1000);

@@ -765,7 +765,7 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
 
     setLoading(true);
 
-    const worryItems = checklist.filter(i => i.status !== 'done').map(i => i.title);
+    const worryItems = checklist.filter(i => i.status === 'worry').map(i => i.title);
     const doneItems = checklist.filter(i => i.status === 'done').map(i => i.title);
     const category = BUSINESS_CATEGORIES.find(c => c.id === businessCategory);
 
@@ -2075,8 +2075,8 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
                   ],
                   checklist: {
                     readyCount: checklist.filter(i => i.status === 'done').length,
-                    worryCount: checklist.filter(i => i.status !== 'done').length,
-                    worryItems: checklist.filter(i => i.status !== 'done').map(i => i.title),
+                    worryCount: checklist.filter(i => i.status === 'worry').length,
+                    worryItems: checklist.filter(i => i.status === 'worry').map(i => i.title),
                     readyItems: checklist.filter(i => i.status === 'done').map(i => i.title),
                   },
                   projectName: `${dong} ${categoryLabel} 창업`,

@@ -458,12 +458,16 @@ export async function generateAIReport(input: AIReportInput): Promise<AIReportOu
   };
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), GEMINI_TIMEOUT);
+  let timeoutId = setTimeout(() => controller.abort(), GEMINI_TIMEOUT);
 
   try {
     let res: Response | null = null;
 
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      // 재시도 시 타임아웃 리셋
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => controller.abort(), GEMINI_TIMEOUT);
+
       res = await callGeminiApi(requestBody, controller.signal);
 
       // 429 Rate Limit → 대기 후 재시도
@@ -478,7 +482,7 @@ export async function generateAIReport(input: AIReportInput): Promise<AIReportOu
     }
 
     if (!res || !res.ok) {
-      console.error('Gemini API 오류:', res?.status);
+      if (IS_DEV) console.error('Gemini API 오류:', res?.status);
       return null;
     }
 
@@ -517,7 +521,7 @@ export async function generateAIReport(input: AIReportInput): Promise<AIReportOu
     return parsed;
   } catch (err) {
     if (err instanceof DOMException && err.name === 'AbortError') {
-      console.warn('Gemini API 타임아웃 (40초 초과)');
+      console.warn('Gemini API 타임아웃 (60초 초과)');
     } else {
       console.error('AI 보고서 생성 실패:', err);
     }
