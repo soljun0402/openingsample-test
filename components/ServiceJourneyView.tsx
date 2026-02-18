@@ -2022,16 +2022,20 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
                   return 'D';
                 };
 
-                // 간이 종합 점수 계산 (체크리스트 + 상권)
-                const doneRatio = checklist.filter(i => i.status === 'done').length / Math.max(checklist.length, 1);
+                // 간이 종합 점수 계산 (체크리스트 100점 만점)
+                // done = 100%, worry = 30%, unchecked = 0%
                 const gradeVal = calcMarketGrade();
-                const gradeScore = gradeVal === 'S' ? 95 : gradeVal === 'A' ? 80 : gradeVal === 'B' ? 65 : gradeVal === 'C' ? 50 : 35;
-                const simpleScore = Math.round(gradeScore * 0.6 + doneRatio * 100 * 0.4);
-                const simpleComment = simpleScore >= 75
-                  ? `${dong} ${categoryLabel} 창업, 좋은 조건입니다! 세부 준비를 마무리하세요.`
-                  : simpleScore >= 55
-                  ? `${dong} 상권은 무난합니다. 미비한 항목을 보완하면 더 좋아집니다.`
-                  : `준비가 더 필요합니다. 체크리스트를 하나씩 해결해 보세요.`;
+                const total = Math.max(checklist.length, 1);
+                const doneCount = checklist.filter(i => i.status === 'done').length;
+                const worryCount = checklist.filter(i => i.status === 'worry').length;
+                const simpleScore = Math.round((doneCount * 100 + worryCount * 30) / total);
+                const simpleComment = simpleScore >= 80
+                  ? `준비가 거의 완료됐습니다! 남은 항목만 마무리하면 오픈 준비 끝!`
+                  : simpleScore >= 50
+                  ? `절반 이상 준비됐어요. 도움 필요 항목을 하나씩 해결해 보세요.`
+                  : simpleScore >= 20
+                  ? `아직 준비할 게 많아요. 체크리스트를 하나씩 체크해 보세요.`
+                  : `체크리스트를 확인하고 준비 상태를 체크해 주세요.`;
 
                 const data: EstimatePDFProps = {
                   customerName: '예비 창업자',
