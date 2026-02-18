@@ -2,6 +2,7 @@
 // Gemini 2.5 Flash API를 사용하여 창업 분석 보고서 생성
 
 import { MarketAnalysisData } from './seoulDataApi';
+import { SEOUL_GUS, SEOUL_DONGS, DONG_INFO_ALL } from '../data/seoulDistricts';
 
 // ─── 입력 타입 ───
 
@@ -14,27 +15,26 @@ export interface AIReportInput {
     gu: string;
     dong: string;
   };
+  locationContext: {
+    guGroup: string;
+    guLandmark: string;
+    dongLandmark: string;
+    dongDescription: string;
+  };
   storeSize: number;
-  marketData: {
+  // 서울 열린데이터 API 데이터 (실제 데이터)
+  apiData: {
+    population: MarketAnalysisData['population'] | null;
+    populationSource: 'api' | 'fallback';
+    stores: MarketAnalysisData['stores'] | null;
+    storesSource: 'api' | 'fallback';
+    sales: MarketAnalysisData['sales'] | null;
+    salesSource: 'api' | 'fallback';
     footTraffic: string;
     footTrafficRaw: number;
     competitors: number;
     avgRent: number;
-    description: string;
-    population?: {
-      total: number;
-      male: number;
-      female: number;
-      age10: number;
-      age20: number;
-      age30: number;
-      age40: number;
-      age50: number;
-      age60plus: number;
-      daytime: number;
-      nighttime: number;
-    };
-  } | null;
+  };
   estimatedCosts: { min: number; max: number };
   checklist: {
     id: string;
@@ -116,103 +116,103 @@ const SYSTEM_PROMPT = `당신은 한국 소상공인 창업 전문 컨설턴트 
 5. 과장 없이 현실적이고 실행 가능한 조언만 제공하세요.
 6. riskFactors는 반드시 해당 업종+지역 조합의 실질적 리스크만 포함하세요.
 
+## 중요: 실제 데이터 기반 분석
+입력에 "서울 열린데이터 API" 출처의 실제 데이터가 포함됩니다.
+이 데이터가 있으면 반드시 이를 기반으로 분석하세요:
+- [API 실데이터] 표시 항목: 서울시 공공데이터에서 조회한 실제 수치입니다. 그대로 인용하세요.
+- [추정치] 표시 항목: 직접 데이터가 없는 항목입니다. 해당 지역·업종의 일반적 특성으로 추정하세요.
+- 추정치는 "약", "추정" 등의 표현을 사용하여 정확한 수치가 아님을 알려주세요.
+
+## 중요: 체크리스트 데이터 연동
+각 체크리스트 항목을 분석할 때, 관련된 상권 데이터를 반드시 참고하세요:
+- 마케팅/홍보 항목 → 유동인구 데이터, 연령대별 분포, 주말/주중 비율 참고
+- 인허가/사업자등록 → 개업률/폐업률 데이터 참고, 해당 지역 신규 진입 난이도
+- 경쟁분석/입지 → 동종업종 점포수, 총 점포수, 프랜차이즈 비율 참고
+- 비용/자금 → 추정매출 대비 투자 회수 기간 산출, 월매출 vs 월임대료 비교
+- 메뉴/상품 → 해당 업종 월평균 매출건수 기반 객단가 분석
+
 ## 중요: 지역·상권 특성 반영
-당신은 서울시 각 구·동의 상권 특성을 잘 알고 있습니다.
-반드시 해당 지역의 실제 특성을 반영하여 분석하세요:
-- 해당 동네의 상권 유형을 파악하세요 (오피스 상권, 주거 상권, 대학가, 역세권, 먹자골목, 관광 상권, 신도시 등)
-- 해당 구·동의 주요 랜드마크, 지하철역, 대학교, 오피스 빌딩 등을 구체적으로 언급하세요
-- 해당 지역의 임대료 수준, 유동인구 패턴, 주 소비층 특성을 반영하세요
-- 예: 강남구 역삼동 → "테헤란로 IT/스타트업 오피스 밀집 지역, 2호선 역삼역 역세권, 평일 점심·저녁 직장인 수요 중심"
-- 예: 마포구 연남동 → "경의선숲길 인접 트렌디 카페거리, 20~30대 감성 소비층 중심, 주말 유동인구 급증"
-- 예: 관악구 신림동 → "서울대 인근 대학가 상권, 가성비 중심 소비 패턴, 학기 중/방학 유동인구 차이 큼"
+반드시 해당 지역의 실제 특성을 반영하세요:
+- 상권 유형 (오피스, 주거, 대학가, 역세권, 관광 등)
+- 구·동의 랜드마크, 지하철역, 대학교, 오피스 빌딩
+- 임대료 수준, 유동인구 패턴, 주 소비층 특성
 
 ## 중요: 업종별 맞춤 분석
-업종에 따라 분석 관점을 달리하세요:
-- 카페/디저트: 좌석 회전율, 테이크아웃 비중, SNS 마케팅, 주변 카페 밀집도, 평단가
-- 음식점: 점심 특선 수요, 배달 비중, 주류 매출 비율, 식자재 원가율, 주방 규모
-- 소매/편의점: 유동인구 대비 매출 전환율, 야간 매출 비중, 배후 주거지 세대 수
-- 미용/뷰티: 예약률, 재방문율, 시술 단가, 주변 경쟁 매장 가격대
-- 교육/학원: 학군, 인근 학교 수, 학부모 소득 수준, 수강료 적정선
-- 기타 업종: 해당 업종의 핵심 성공 요인에 맞춰 분석
+업종에 따라 핵심 지표를 달리하세요:
+- 카페/디저트: 좌석 회전율, 테이크아웃 비중, SNS 마케팅, 카페 밀집도
+- 음식점: 점심특선 수요, 배달 비중, 주류매출, 식자재 원가율
+- 소매: 유동인구 대비 전환율, 야간 매출, 배후 세대수
+- 미용/뷰티: 예약률, 재방문율, 시술 단가, 경쟁 가격대
+- 교육/학원: 학군, 학교 수, 학부모 소득, 수강료
 
-## 중요: 콘텐츠 풍부도
-이 JSON은 PDF 보고서 5페이지를 채우는 데 사용됩니다.
-- 각 텍스트 필드를 글자 수 제한에 가깝게 최대한 구체적이고 풍부하게 작성하세요.
-- 짧은 한 줄이 아니라, 실제 컨설팅 리포트처럼 구체적 수치·근거·사례를 포함하세요.
-- 예: "좋은 위치입니다" (X) → "일 평균 유동인구 8만 명의 강남 핵심 오피스 상권으로, 점심·저녁 피크타임 직장인 수요가 안정적이며, 2호선 역삼역 도보 3분 거리로 접근성이 뛰어납니다." (O)
-- checklistAdvice는 입력된 모든 체크리스트 항목에 대해 빠짐없이 조언을 작성하세요.
-- actionSteps, costTip, timeline은 worry 항목에 반드시 포함하세요.
-- riskFactors는 정확히 3개, savingTips는 정확히 3개 작성하세요.
-- actionPlan phases는 4~5단계, 각 단계에 tasks 3~5개를 작성하세요.
+## 콘텐츠 풍부도
+- 각 필드를 글자 수 제한에 가깝게 풍부하게 작성하세요.
+- "좋은 위치입니다" (X) → 구체적 수치·근거 포함한 분석 (O)
+- checklistAdvice는 모든 항목에 빠짐없이. actionSteps/costTip/timeline은 worry 필수.
+- riskFactors 정확히 3개, savingTips 정확히 3개.
+- actionPlan phases 4~5단계, 각 tasks 3~5개.
 
 ## overallComment 작성 가이드
-overallComment는 보고서 맨 위에 표시되는 "종합 의견"입니다.
-- 해당 지역 상권의 핵심 특성을 1문장으로 요약하고
-- 이 업종이 해당 지역에서 갖는 강점과 주의점을 각각 1문장으로 제시하세요
-- 반드시 지역명과 업종명을 명시하고, 구체적 수치(유동인구, 경쟁업체 수 등)를 포함하세요
+보고서 맨 위에 표시되는 "종합 의견" (2~3문장):
+- 해당 지역 상권 핵심 특성 1문장
+- 이 업종의 강점과 주의점 각 1문장
+- 지역명, 업종명, 구체적 수치 포함 필수
 
-## overallScore 채점 기준 (100점 만점)
-이 점수는 "창업 준비도"가 아니라 "이 업종+지역 조합의 창업 잠재력 종합 점수"입니다.
-아래 요소를 종합하여 40~95점 범위에서 현실적으로 채점하세요:
-- 상권 입지 (유동인구, 타겟 고객 밀도): 30%
-- 경쟁 환경 (경쟁업체 수, 차별화 가능성): 20%
-- 비용 적정성 (임대료 대비 매출 기대치): 20%
+## overallScore 채점 기준 (40~95점)
+- 상권 입지 (유동인구, 타겟 밀도): 30%
+- 경쟁 환경 (점포수, 차별화 가능성): 20%
+- 비용 적정성 (임대료 vs 매출 기대치): 20%
 - 준비 상태 (체크리스트 완료율): 15%
-- 성장 가능성 (지역 발전 추세, 업종 트렌드): 15%
-
-점수 분포 가이드:
-- 80~95: 매우 좋은 조건 (scoreLabel: "양호")
-- 60~79: 무난한 조건 (scoreLabel: "보통")
-- 40~59: 보완 필요 (scoreLabel: "주의 필요")
-절대 40점 미만이나 95점 초과를 주지 마세요.`;
+- 성장 가능성 (지역 트렌드, 업종 트렌드): 15%
+점수: 80~95 양호 / 60~79 보통 / 40~59 주의 필요`;
 
 const OUTPUT_SCHEMA_DESCRIPTION = `응답 JSON 스키마:
 {
   "summary": {
     "title": "string (30자 이내, 예: '역삼동 카페 창업 분석 보고서')",
-    "oneLiner": "string (80자 이내, 핵심 요약 — 구체적 수치와 근거를 포함해 한 문장으로)",
-    "overallComment": "string (200자 이내, 종합 의견 — 이 업종+지역 조합에 대한 전문 컨설턴트의 전반적 평가. 강점·약점·핵심 조언을 2~3문장으로 구체적으로 서술)",
-    "overallScore": "number (40~95, 창업 잠재력 종합 점수)",
+    "oneLiner": "string (80자 이내, 핵심 요약 — 구체적 수치와 근거를 포함)",
+    "overallComment": "string (200자 이내, 종합 의견 — 강점·약점·핵심 조언을 2~3문장)",
+    "overallScore": "number (40~95)",
     "scoreLabel": "string ('양호' | '보통' | '주의 필요')",
-    "keyHighlights": ["string (각 50자 이내, 정확히 4개 — 입지/경쟁/비용/준비 관점에서 하나씩)"]
+    "keyHighlights": ["string (각 50자 이내, 정확히 4개)"]
   },
   "locationAnalysis": {
     "grade": "'S' | 'A' | 'B' | 'C' | 'D'",
-    "gradeReason": "string (150자 이내, 등급 판단 근거를 유동인구·경쟁·입지 수치와 함께 구체적으로)",
-    "targetCustomer": "string (80자 이내, 타겟 고객 프로필을 연령/직업/소비패턴까지 구체적으로)",
-    "peakHours": "string (60자 이내, 예: '평일 출근길 8~9시, 점심 11:30~13:30, 퇴근 후 17:30~20시 / 주말 오후 13~18시')",
-    "strengths": ["string (각 60자 이내, 정확히 3개 — 수치나 근거 포함)"],
-    "weaknesses": ["string (각 60자 이내, 정확히 2개 — 수치나 근거 포함)"],
-    "nearbyTip": "string (120자 이내, 주변 상권 활용 전략을 구체적 행동 포인트로)"
+    "gradeReason": "string (150자 이내)",
+    "targetCustomer": "string (80자 이내)",
+    "peakHours": "string (60자 이내)",
+    "strengths": ["string (각 60자 이내, 정확히 3개)"],
+    "weaknesses": ["string (각 60자 이내, 정확히 2개)"],
+    "nearbyTip": "string (120자 이내)"
   },
   "costAnalysis": {
-    "totalComment": "string (120자 이내, 총 비용에 대한 평가와 해당 지역 평균 대비 분석)",
-    "savingTips": [{ "area": "string", "tip": "string (120자 이내, 구체적 방법과 예상 효과)", "savedAmount": "string (예: '200~500만원')" }] (정확히 3개),
-    "budgetPriority": ["string (각 60자 이내, 정확히 3개, 해당 업종에서 절대 아끼면 안 되는 항목과 이유)"]
+    "totalComment": "string (120자 이내)",
+    "savingTips": [{ "area": "string", "tip": "string (120자 이내)", "savedAmount": "string" }] (정확히 3개),
+    "budgetPriority": ["string (각 60자 이내, 정확히 3개)"]
   },
   "checklistAdvice": [{
-    "itemId": "string (입력 checklist[].id와 정확히 매칭 — 모든 항목에 대해 빠짐없이 작성)",
+    "itemId": "string (입력 checklist[].id와 정확히 매칭)",
     "status": "'done' | 'worry'",
-    "advice": "string (100자 이내, 해당 항목에 대한 구체적 컨설팅 의견)",
-    "actionSteps": ["string (각 70자 이내, 2~3개 — worry 항목은 반드시 포함, done 항목도 다음 단계 제안)"],
-    "costTip": "string (60자 이내, 비용 관련 팁 — worry 항목 필수)",
-    "timeline": "string (예: '1~2주' — worry 항목 필수)"
+    "advice": "string (100자 이내)",
+    "actionSteps": ["string (각 70자 이내, 2~3개)"],
+    "costTip": "string (60자 이내, worry 필수)",
+    "timeline": "string (worry 필수)"
   }],
   "riskFactors": [{
     "level": "'high' | 'medium' | 'low'",
     "title": "string (20자 이내)",
-    "description": "string (120자 이내, 리스크의 구체적 원인과 예상 영향을 수치와 함께)",
-    "mitigation": "string (120자 이내, 실행 가능한 대응 방안을 단계별로)"
+    "description": "string (120자 이내)",
+    "mitigation": "string (120자 이내)"
   }] (정확히 3개, high/medium/low 각 1개씩),
   "actionPlan": {
     "phases": [{
-      "phase": "string (예: '1단계: 인허가 준비')",
-      "duration": "string (예: '1~2주')",
-      "tasks": ["string (각 40자 이내, 3~5개, 구체적 할 일)"]
+      "phase": "string",
+      "duration": "string",
+      "tasks": ["string (각 40자 이내, 3~5개)"]
     }] (정확히 4단계),
-    "totalDuration": "string (예: '8~12주')"
+    "totalDuration": "string"
   },
-  "openingTip": "string (200자 이내, 해당 업종+지역에 특화된 창업 성공 꿀팁 — 실제 사례나 업계 노하우 포함)"
+  "openingTip": "string (200자 이내)"
 }`;
 
 // ─── 입력 JSON 조합 함수 ───
@@ -251,6 +251,12 @@ export function buildReportInput(params: BuildReportInputParams): AIReportInput 
 
   const storeSizeNum = typeof storeSize === 'number' ? storeSize : 17;
 
+  // 지역 상세 컨텍스트 조합
+  const guInfo = SEOUL_GUS.find(g => g.name === selectedGu);
+  const dongList = SEOUL_DONGS[selectedGu] || [];
+  const dongInfo = dongList.find(d => d.name === dong);
+  const dongMarket = DONG_INFO_ALL[dong];
+
   return {
     business: {
       category: businessCategory,
@@ -260,44 +266,130 @@ export function buildReportInput(params: BuildReportInputParams): AIReportInput 
       gu: selectedGu,
       dong,
     },
+    locationContext: {
+      guGroup: guInfo?.group || '',
+      guLandmark: guInfo?.landmark || '',
+      dongLandmark: dongInfo?.landmark || '',
+      dongDescription: dongMarket?.description || marketData?.description || '',
+    },
     storeSize: storeSizeNum,
-    marketData: marketData
-      ? {
-          footTraffic: marketData.footTraffic,
-          footTrafficRaw: marketData.footTrafficRaw,
-          competitors: marketData.competitors,
-          avgRent: marketData.avgRent,
-          description: marketData.description,
-          population: marketData.population
-            ? {
-                total: marketData.population.total,
-                male: marketData.population.male,
-                female: marketData.population.female,
-                age10: marketData.population.age10,
-                age20: marketData.population.age20,
-                age30: marketData.population.age30,
-                age40: marketData.population.age40,
-                age50: marketData.population.age50,
-                age60plus: marketData.population.age60plus,
-                daytime: marketData.population.daytime,
-                nighttime: marketData.population.nighttime,
-              }
-            : undefined,
-        }
-      : null,
+    apiData: {
+      population: marketData?.population || null,
+      populationSource: marketData?.source || 'fallback',
+      stores: marketData?.stores || null,
+      storesSource: marketData?.storesSource || 'fallback',
+      sales: marketData?.sales || null,
+      salesSource: marketData?.salesSource || 'fallback',
+      footTraffic: marketData?.footTraffic || dongMarket?.footTraffic || '',
+      footTrafficRaw: marketData?.footTrafficRaw || 0,
+      competitors: marketData?.competitors ?? dongMarket?.competitors ?? 0,
+      avgRent: marketData?.avgRent ?? dongMarket?.avgRent ?? 0,
+    },
     estimatedCosts,
     checklist: checklist.map((item) => ({
       id: item.id,
       title: item.title,
       category: item.category,
       description: item.description,
-      // unchecked = 도움필요로 AI에게 전달
       status: item.status === 'done' ? 'done' as const : 'worry' as const,
       isRequired: item.isRequired,
       estimatedCost: item.estimatedCost,
       comment: item.comment,
     })),
   };
+}
+
+// ─── 유저 메시지 조합 ───
+
+function buildUserMessage(input: AIReportInput): string {
+  const { location, locationContext: loc, business, apiData } = input;
+
+  // 유동인구 섹션
+  let populationSection = '';
+  if (apiData.population) {
+    const pop = apiData.population;
+    populationSection = `
+### 유동인구 [${apiData.populationSource === 'api' ? 'API 실데이터' : '추정치'}]
+- 분기 총 유동인구: ${pop.total.toLocaleString()}명
+- 일 평균: ${apiData.footTraffic}
+- 남성 ${pop.male.toLocaleString()}명 / 여성 ${pop.female.toLocaleString()}명
+- 연령대: 10대 ${pop.age10.toLocaleString()} | 20대 ${pop.age20.toLocaleString()} | 30대 ${pop.age30.toLocaleString()} | 40대 ${pop.age40.toLocaleString()} | 50대 ${pop.age50.toLocaleString()} | 60대+ ${pop.age60plus.toLocaleString()}
+- 주간(06~17시) ${pop.daytime.toLocaleString()}명 / 야간(17~06시) ${pop.nighttime.toLocaleString()}명`;
+  } else {
+    populationSection = `
+### 유동인구 [추정치]
+- ${apiData.footTraffic || '데이터 없음'}`;
+  }
+
+  // 점포수 섹션
+  let storesSection = '';
+  if (apiData.stores) {
+    const s = apiData.stores;
+    storesSection = `
+### 점포 현황 [${apiData.storesSource === 'api' ? 'API 실데이터' : '추정치'}]
+- 해당 지역 전체 점포수: ${s.total}개
+- 동종업종(${business.categoryLabel}) 점포수: ${s.similarCount}개
+- 프랜차이즈 점포: ${s.franchiseCount}개
+- 개업률: ${s.openRate}% / 폐업률: ${s.closeRate}%`;
+  } else {
+    storesSection = `
+### 점포 현황 [추정치]
+- 동종 경쟁업체: 약 ${apiData.competitors}개 (추정)`;
+  }
+
+  // 추정매출 섹션
+  let salesSection = '';
+  if (apiData.sales) {
+    const sl = apiData.sales;
+    const monthlyWon = sl.monthlyAmount >= 10000
+      ? `${Math.round(sl.monthlyAmount / 10000).toLocaleString()}만원`
+      : `${sl.monthlyAmount.toLocaleString()}원`;
+    salesSection = `
+### 추정매출 [${apiData.salesSource === 'api' ? 'API 실데이터' : '추정치'}]
+- 동종업종(${business.categoryLabel}) 월 추정매출: ${monthlyWon}
+- 월 추정 거래건수: ${sl.monthlyCount.toLocaleString()}건
+- 주중/주말 매출비: ${sl.weekdayRatio}% / ${sl.weekendRatio}%`;
+  } else {
+    salesSection = `
+### 추정매출 [데이터 없음]
+- AI가 해당 지역+업종 기반으로 추정해주세요`;
+  }
+
+  // 체크리스트 섹션
+  const doneItems = input.checklist.filter(c => c.status === 'done');
+  const worryItems = input.checklist.filter(c => c.status === 'worry');
+
+  const checklistSection = `
+## 체크리스트 현황 (done: ${doneItems.length}개 / worry: ${worryItems.length}개)
+${input.checklist.map(c =>
+  `- [${c.status}] ${c.title} (${c.category}) — ${c.description}${c.comment ? ` / 사용자 메모: "${c.comment}"` : ''} / 예상비용: ${c.estimatedCost.min}~${c.estimatedCost.max}${c.estimatedCost.unit}`
+).join('\n')}`;
+
+  return `다음 창업 정보를 분석하여 보고서 JSON을 생성해주세요.
+
+## 지역 정보
+- 지역: 서울시 ${location.gu} ${location.dong}
+- 권역: ${loc.guGroup}
+- 구 랜드마크: ${loc.guLandmark}
+- 동 랜드마크: ${loc.dongLandmark}
+- 상권 특성: ${loc.dongDescription}
+- 평균 임대료: 평당 약 ${apiData.avgRent}만원 [추정치]
+
+## 업종 정보
+- 업종: ${business.categoryLabel} (${business.category})
+- 매장 규모: ${input.storeSize}평
+
+## 상권 데이터 (서울 열린데이터 API)
+${populationSection}
+${storesSection}
+${salesSection}
+
+## 비용 정보
+- 총 예상 창업비용: ${input.estimatedCosts.min}만원 ~ ${input.estimatedCosts.max}만원
+${checklistSection}
+
+## 응답 형식
+${OUTPUT_SCHEMA_DESCRIPTION}`;
 }
 
 // ─── Gemini API 호출 ───
@@ -311,13 +403,7 @@ export async function generateAIReport(input: AIReportInput): Promise<AIReportOu
     return null;
   }
 
-  const userMessage = `다음 창업 정보를 분석하여 보고서 JSON을 생성해주세요.
-
-## 입력 데이터
-${JSON.stringify(input)}
-
-## 응답 형식
-${OUTPUT_SCHEMA_DESCRIPTION}`;
+  const userMessage = buildUserMessage(input);
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), GEMINI_TIMEOUT);
@@ -362,7 +448,6 @@ ${OUTPUT_SCHEMA_DESCRIPTION}`;
       return null;
     }
 
-    // LLM이 가끔 markdown 코드 펜스를 포함할 수 있으므로 제거
     const cleanText = text.replace(/^```json\s*\n?/i, '').replace(/\n?```\s*$/i, '');
 
     let parsed: AIReportOutput;

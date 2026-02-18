@@ -325,16 +325,16 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
     }
   }, [businessCategory]);
 
-  // Step 3 진입 시 상권 데이터 로드
+  // Step 3 진입 시 상권 데이터 로드 (업종별 점포수+매출 포함)
   useEffect(() => {
     if (currentStep === 3 && dong) {
       setMarketDataLoading(true);
-      getMarketAnalysis(dong)
+      getMarketAnalysis(dong, businessCategory)
         .then(data => setMarketData(data))
         .catch(() => setMarketData(null))
         .finally(() => setMarketDataLoading(false));
     }
-  }, [currentStep, dong]);
+  }, [currentStep, dong, businessCategory]);
 
   // dong 변경 시 marketData 초기화
   useEffect(() => {
@@ -2022,21 +2022,23 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
                   return 'D';
                 };
 
-                // 간이 종합 점수 계산 (체크리스트 100점 만점)
-                // done = 100%, worry = 30%, unchecked = 0%
+                // 준비 점수 계산 (100점 만점)
+                // 기본 15점 + 체크리스트(70점) + 부동산 계약(15점)
                 const gradeVal = calcMarketGrade();
                 const total = Math.max(checklist.length, 1);
                 const doneCount = checklist.filter(i => i.status === 'done').length;
                 const worryCount = checklist.filter(i => i.status === 'worry').length;
-                const rawScore = Math.round((doneCount * 100 + worryCount * 30) / total);
-                const simpleScore = Math.min(rawScore, 90); // 만점 90 — 나머지 10점은 전문가 컨설팅
+                const checklistScore = Math.round((doneCount * 100 + worryCount * 40) / total * 0.7);
+                const contractBonus = hasRealEstateContract ? 15 : 0;
+                const rawScore = 15 + checklistScore + contractBonus;
+                const simpleScore = Math.min(rawScore, 95);
                 const simpleComment = simpleScore >= 80
                   ? `거의 다 준비됐어요! 오프닝 매니저와 마지막 점검만 남았습니다.`
                   : simpleScore >= 50
                   ? `절반 이상 준비됐어요. 전문 매니저가 나머지를 도와드릴게요.`
                   : simpleScore >= 20
                   ? `아직 준비할 게 많아요. 매니저와 함께 하나씩 해결해 보세요.`
-                  : `체크리스트를 확인하고 준비 상태를 체크해 주세요.`;
+                  : `시작이 반이에요! 체크리스트를 하나씩 체크해 보세요.`;
 
                 const data: EstimatePDFProps = {
                   customerName: '예비 창업자',

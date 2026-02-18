@@ -140,7 +140,7 @@ export const EstimatePDFDocument: React.FC<EstimatePDFProps> = ({
             {hasAI && (
                 <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
                     <View style={{ flex: 1, padding: 7, backgroundColor: BG, borderRadius: 4 }}>
-                        <Text style={{ fontSize: 6.5, color: '#888', marginBottom: 1, fontFamily: F }}>창업 잠재력 점수</Text>
+                        <Text style={{ fontSize: 6.5, color: '#888', marginBottom: 1, fontFamily: F }}>준비 점수</Text>
                         <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
                             <Text style={{ fontSize: 22, fontWeight: 'bold', color: BRAND, marginRight: 3, fontFamily: F }}>{ai.summary.overallScore}</Text>
                             <Text style={{ fontSize: 8, color: '#666', fontFamily: F }}>/ 100 ({ai.summary.scoreLabel})</Text>
@@ -152,7 +152,7 @@ export const EstimatePDFDocument: React.FC<EstimatePDFProps> = ({
                             <View style={{ width: 24, height: 24, borderRadius: 4, backgroundColor: gc(ai.locationAnalysis.grade), justifyContent: 'center', alignItems: 'center', marginRight: 6 }}>
                                 <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#FFF', fontFamily: F }}>{ai.locationAnalysis.grade}</Text>
                             </View>
-                            <Text style={{ fontSize: 7, color: '#666', flex: 1, fontFamily: F }}>{cut(ai.locationAnalysis.gradeReason, 40)}</Text>
+                            <Text style={{ fontSize: 7, color: '#666', flex: 1, fontFamily: F }}>{cut(ai.locationAnalysis.gradeReason, 60)}</Text>
                         </View>
                     </View>
                 </View>
@@ -211,7 +211,7 @@ export const EstimatePDFDocument: React.FC<EstimatePDFProps> = ({
                     </View>
                     <View style={{ flex: 1 }}>
                         <Text style={s.bold}>상권 등급: {ai.locationAnalysis.grade}등급</Text>
-                        <Text style={s.s8}>{cut(ai.locationAnalysis.gradeReason, 120)}</Text>
+                        <Text style={s.s8}>{cut(ai.locationAnalysis.gradeReason, 150)}</Text>
                     </View>
                 </View>
 
@@ -219,7 +219,7 @@ export const EstimatePDFDocument: React.FC<EstimatePDFProps> = ({
                 <View style={{ flexDirection: 'row', gap: 6, marginBottom: 8 }}>
                     <View style={[s.card, { flex: 1 }]}>
                         <Text style={s.lbl}>주요 타겟 고객</Text>
-                        <Text style={s.b9}>{cut(ai.locationAnalysis.targetCustomer, 70)}</Text>
+                        <Text style={s.b9}>{cut(ai.locationAnalysis.targetCustomer, 80)}</Text>
                     </View>
                     <View style={[s.card, { flex: 1 }]}>
                         <Text style={s.lbl}>피크 시간대</Text>
@@ -234,7 +234,7 @@ export const EstimatePDFDocument: React.FC<EstimatePDFProps> = ({
                         {ai.locationAnalysis.strengths.slice(0, 3).map((x, i) => (
                             <View key={i} style={s.bRow}>
                                 <Text style={{ fontSize: 7.5, color: GREEN, marginRight: 3, width: 6, fontFamily: F }}>+</Text>
-                                <Text style={s.b9}>{cut(x, 55)}</Text>
+                                <Text style={s.b9}>{cut(x, 60)}</Text>
                             </View>
                         ))}
                     </View>
@@ -243,7 +243,7 @@ export const EstimatePDFDocument: React.FC<EstimatePDFProps> = ({
                         {ai.locationAnalysis.weaknesses.slice(0, 2).map((x, i) => (
                             <View key={i} style={s.bRow}>
                                 <Text style={{ fontSize: 7.5, color: ORANGE, marginRight: 3, width: 6, fontFamily: F }}>-</Text>
-                                <Text style={s.b9}>{cut(x, 55)}</Text>
+                                <Text style={s.b9}>{cut(x, 60)}</Text>
                             </View>
                         ))}
                     </View>
@@ -252,7 +252,7 @@ export const EstimatePDFDocument: React.FC<EstimatePDFProps> = ({
                 {/* 주변 상권 팁 */}
                 <View style={s.cardB}>
                     <Text style={{ fontSize: 7.5, fontWeight: 'bold', color: BRAND, marginBottom: 2, fontFamily: F }}>주변 상권 활용 팁</Text>
-                    <Text style={s.b9}>{cut(ai.locationAnalysis.nearbyTip, 110)}</Text>
+                    <Text style={s.b9}>{cut(ai.locationAnalysis.nearbyTip, 120)}</Text>
                 </View>
 
                 {/* AI 비용 분석 */}
@@ -266,7 +266,7 @@ export const EstimatePDFDocument: React.FC<EstimatePDFProps> = ({
                             <Text style={s.bold}>{tip.area}</Text>
                             <Text style={{ fontSize: 7, color: BRAND, fontWeight: 'bold', fontFamily: F }}>{tip.savedAmount}</Text>
                         </View>
-                        <Text style={[s.s8, { flex: 1 }]}>{cut(tip.tip, 80)}</Text>
+                        <Text style={[s.s8, { flex: 1 }]}>{cut(tip.tip, 100)}</Text>
                     </View>
                 ))}
 
@@ -318,10 +318,10 @@ export const EstimatePDFDocument: React.FC<EstimatePDFProps> = ({
                                 <Text style={{ fontSize: 7, color: c.b, fontWeight: 'bold', marginRight: 3, fontFamily: F }}>[{rl(risk.level)}]</Text>
                                 <Text style={s.bold}>{risk.title}</Text>
                             </View>
-                            <Text style={[s.s8, { marginBottom: 2 }]}>{cut(risk.description, 100)}</Text>
+                            <Text style={[s.s8, { marginBottom: 2 }]}>{cut(risk.description, 120)}</Text>
                             <View style={{ flexDirection: 'row' }}>
                                 <Text style={{ fontSize: 7.5, color: BRAND, fontWeight: 'bold', marginRight: 2, fontFamily: F }}>대응:</Text>
-                                <Text style={[s.s8, { flex: 1 }]}>{cut(risk.mitigation, 100)}</Text>
+                                <Text style={[s.s8, { flex: 1 }]}>{cut(risk.mitigation, 120)}</Text>
                             </View>
                         </View>
                     );
@@ -426,21 +426,21 @@ export const EstimatePDFDocument: React.FC<EstimatePDFProps> = ({
                                 <Text style={s.bold}>{title}</Text>
                                 <Text style={{ fontSize: 6.5, color, marginLeft: 3, fontFamily: F }}>({done ? '완료' : '도움필요'})</Text>
                             </View>
-                            <Text style={[s.s8, { marginLeft: 10 }]}>{cut(item.advice, 70)}</Text>
+                            <Text style={[s.s8, { marginLeft: 10 }]}>{cut(item.advice, 100)}</Text>
 
                             {!done && item.actionSteps && item.actionSteps.length > 0 && (
                                 <View style={{ marginLeft: 10, marginTop: 1 }}>
                                     {item.actionSteps.slice(0, 2).map((step, j) => (
                                         <View key={j} style={{ flexDirection: 'row', marginBottom: 1 }}>
                                             <Text style={{ fontSize: 7, color: BRAND, marginRight: 2, width: 8, fontFamily: F }}>{j + 1}.</Text>
-                                            <Text style={s.s8}>{cut(step, 55)}</Text>
+                                            <Text style={s.s8}>{cut(step, 70)}</Text>
                                         </View>
                                     ))}
                                 </View>
                             )}
                             {!done && (item.costTip || item.timeline) && (
                                 <View style={{ flexDirection: 'row', marginLeft: 10, marginTop: 1, gap: 8 }}>
-                                    {item.costTip && <Text style={{ fontSize: 7, color: BRAND, fontFamily: F }}>비용: {cut(item.costTip, 35)}</Text>}
+                                    {item.costTip && <Text style={{ fontSize: 7, color: BRAND, fontFamily: F }}>비용: {cut(item.costTip, 50)}</Text>}
                                     {item.timeline && <Text style={{ fontSize: 7, color: '#888', fontFamily: F }}>기간: {item.timeline}</Text>}
                                 </View>
                             )}
@@ -471,7 +471,7 @@ export const EstimatePDFDocument: React.FC<EstimatePDFProps> = ({
                 <Text style={s.h3}>분석 요약</Text>
                 <View style={{ flexDirection: 'row', gap: 6, marginBottom: 10 }}>
                     <View style={[s.card, { flex: 1, alignItems: 'center', paddingVertical: 10 }]}>
-                        <Text style={{ fontSize: 6.5, color: '#888', marginBottom: 1, fontFamily: F }}>잠재력 점수</Text>
+                        <Text style={{ fontSize: 6.5, color: '#888', marginBottom: 1, fontFamily: F }}>준비 점수</Text>
                         <Text style={{ fontSize: 20, fontWeight: 'bold', color: BRAND, fontFamily: F }}>{ai.summary.overallScore}</Text>
                         <Text style={{ fontSize: 7, color: '#888', fontFamily: F }}>{ai.summary.scoreLabel}</Text>
                     </View>

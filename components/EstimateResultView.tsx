@@ -43,7 +43,8 @@ const AI_STEPS = [
 const getScoreColor = (score: number) => {
     if (score >= 80) return { text: 'text-emerald-600', bg: 'bg-emerald-500', ring: 'ring-emerald-200', light: 'bg-emerald-50', stroke: '#10B981' };
     if (score >= 60) return { text: 'text-blue-600', bg: 'bg-blue-500', ring: 'ring-blue-200', light: 'bg-blue-50', stroke: '#3B82F6' };
-    return { text: 'text-amber-600', bg: 'bg-amber-500', ring: 'ring-amber-200', light: 'bg-amber-50', stroke: '#F59E0B' };
+    if (score > 10) return { text: 'text-amber-600', bg: 'bg-amber-500', ring: 'ring-amber-200', light: 'bg-amber-50', stroke: '#F59E0B' };
+    return { text: 'text-red-600', bg: 'bg-red-500', ring: 'ring-red-200', light: 'bg-red-50', stroke: '#EF4444' };
 };
 
 const getGradeStyle = (grade: string) => {
@@ -306,11 +307,11 @@ export const EstimateResultView: React.FC<EstimateResultViewProps> = ({ data, on
                                 </div>
                             </div>
 
-                            {/* 간이 종합 점수 */}
+                            {/* 준비 점수 */}
                             {data.simpleScore != null && (
                                 <div className="border-t border-slate-100 pt-4">
                                     <div className="flex items-center justify-between mb-2">
-                                        <span className="text-sm font-bold text-slate-700">종합 점수</span>
+                                        <span className="text-sm font-bold text-slate-700">준비 점수</span>
                                         <span className={`text-2xl font-black ${getScoreColor(data.simpleScore).text}`}>{data.simpleScore}<span className="text-sm text-slate-400 font-medium">점</span></span>
                                     </div>
                                     <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden mb-3">
