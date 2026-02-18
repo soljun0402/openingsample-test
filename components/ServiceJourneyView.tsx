@@ -17,7 +17,7 @@ import {
   Wind, Flame, ChefHat, Package, Monitor, Truck, Refrigerator, Armchair,
   Users, TrendingDown, Navigation, MapPinned, CircleDollarSign, Eye,
   Briefcase, MoreHorizontal, ImagePlus, RotateCcw, ShieldAlert, Zap, FireExtinguisher, Droplets, Music, HeartPulse, RectangleHorizontal, FileSearch, DoorOpen,
-  Trash2, ShieldCheck, ScanBarcode, Thermometer, Network, Shirt
+  Trash2, ShieldCheck, ScanBarcode, Thermometer, Network, Shirt, Circle
 } from 'lucide-react';
 import {
   SEOUL_GUS, SEOUL_DONGS, DONG_INFO_ALL, DONG_COORDINATES_ALL,
@@ -1910,7 +1910,7 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
           <div className="space-y-5">
             {/* 안내 + 스킵 */}
             <div className="flex items-center justify-between">
-              <p className="text-xs text-slate-400">탭: 미확인 → 준비됨 → 도움필요</p>
+              <p className="text-xs text-slate-400">탭하여 준비된 항목을 체크하세요</p>
               <button onClick={goToNextStep} className="text-xs text-brand-500 font-bold px-3 py-1.5 rounded-lg hover:bg-brand-50 transition-colors">
                 건너뛰기 →
               </button>
@@ -1918,10 +1918,10 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
 
             {/* 범례 */}
             <div className="flex gap-4 justify-center">
-              <span className="flex items-center gap-1.5 text-xs text-green-600"><span className="w-2.5 h-2.5 rounded-full bg-green-500" /> 준비됨</span>
+              <span className="flex items-center gap-1.5 text-xs text-green-600"><span className="w-2.5 h-2.5 rounded-full bg-green-500" /> 준비완료</span>
               <span className="flex items-center gap-1.5 text-xs text-orange-500"><span className="w-2.5 h-2.5 rounded-full bg-orange-400" /> 도움필요</span>
+              <span className="flex items-center gap-1.5 text-xs text-slate-400"><span className="w-2.5 h-2.5 rounded-full bg-slate-300" /> 미확인</span>
             </div>
-            <p className="text-center text-xs text-slate-400">탭하여 준비된 항목을 체크하세요</p>
 
             {['행정/서류', '인테리어/공사', '장비/세팅', '매니저 지원'].map(category => {
               const categoryItems = checklist.filter(item => item.category === category);
@@ -1932,38 +1932,68 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
                   <p className="text-xs font-bold text-slate-400 mb-2 px-1">{category === '매니저 지원' ? '매니저 지원 항목' : category}</p>
                   <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100">
                     {categoryItems.map((item, idx) => (
-                      <button
+                      <div
                         key={item.id}
-                        onClick={() => {
-                          const next = item.status === 'done' ? 'unchecked' : 'done';
-                          toggleChecklistItem(item.id, next);
-                        }}
-                        className={`w-full flex items-center gap-3 px-4 py-3.5 text-left transition-all active:bg-slate-50 ${
+                        className={`w-full px-4 py-3.5 transition-all ${
                           idx > 0 ? 'border-t border-slate-50' : ''
                         }`}
                       >
-                        {/* 상태 인디케이터 */}
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all ${
-                          item.status === 'done' ? 'bg-green-500 text-white' : 'bg-orange-100 text-orange-400'
-                        }`}>
-                          {item.status === 'done' ? <Check size={16} /> : <AlertTriangle size={14} />}
+                        <div className="flex items-center gap-3">
+                          {/* 상태 인디케이터 */}
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all ${
+                            item.status === 'done' ? 'bg-green-500 text-white' :
+                            item.status === 'worry' ? 'bg-orange-400 text-white' :
+                            'bg-slate-200 text-slate-400'
+                          }`}>
+                            {item.status === 'done' ? <Check size={16} /> :
+                             item.status === 'worry' ? <AlertTriangle size={14} /> :
+                             <Circle size={14} />}
+                          </div>
+
+                          {/* 텍스트 */}
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-[13px] font-bold leading-tight ${
+                              item.status === 'done' ? 'text-green-700' :
+                              item.status === 'worry' ? 'text-orange-600' :
+                              'text-slate-600'
+                            }`}>{item.title}</p>
+                            <p className="text-xs text-slate-400 mt-0.5">{item.description}</p>
+                          </div>
+
+                          {/* 상태 라벨 */}
+                          {item.status !== 'unchecked' && (
+                            <span className={`text-xs font-bold px-2 py-1 rounded-full shrink-0 ${
+                              item.status === 'done' ? 'bg-green-50 text-green-600' : 'bg-orange-50 text-orange-500'
+                            }`}>
+                              {item.status === 'done' ? '준비완료' : '도움필요'}
+                            </span>
+                          )}
                         </div>
 
-                        {/* 텍스트 */}
-                        <div className="flex-1 min-w-0">
-                          <p className={`text-[13px] font-bold leading-tight ${
-                            item.status === 'done' ? 'text-green-700' : 'text-orange-600'
-                          }`}>{item.title}</p>
-                          <p className="text-xs text-slate-400 mt-0.5">{item.description}</p>
+                        {/* 2개 버튼 */}
+                        <div className="flex gap-2 mt-2.5 ml-11">
+                          <button
+                            onClick={() => toggleChecklistItem(item.id, item.status === 'done' ? 'unchecked' : 'done')}
+                            className={`flex-1 text-xs font-bold py-2 rounded-lg transition-all ${
+                              item.status === 'done'
+                                ? 'bg-green-500 text-white'
+                                : 'bg-slate-100 text-slate-500 hover:bg-green-50 hover:text-green-600'
+                            }`}
+                          >
+                            ✓ 준비완료
+                          </button>
+                          <button
+                            onClick={() => toggleChecklistItem(item.id, item.status === 'worry' ? 'unchecked' : 'worry')}
+                            className={`flex-1 text-xs font-bold py-2 rounded-lg transition-all ${
+                              item.status === 'worry'
+                                ? 'bg-orange-400 text-white'
+                                : 'bg-slate-100 text-slate-500 hover:bg-orange-50 hover:text-orange-500'
+                            }`}
+                          >
+                            ⚠ 도움필요
+                          </button>
                         </div>
-
-                        {/* 상태 라벨 */}
-                        <span className={`text-xs font-bold px-2 py-1 rounded-full shrink-0 ${
-                          item.status === 'done' ? 'bg-green-50 text-green-600' : 'bg-orange-50 text-orange-500'
-                        }`}>
-                          {item.status === 'done' ? '준비됨' : '도움필요'}
-                        </span>
-                      </button>
+                      </div>
                     ))}
                   </div>
                 </div>
