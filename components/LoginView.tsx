@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../utils/supabaseClient';
-import { DoorOpen, ArrowRight, ArrowLeft, Lock, Mail, Loader2, Sparkles, Phone, User, ChevronDown } from 'lucide-react';
+import { DoorOpen, ArrowRight, ArrowLeft, Lock, Mail, Loader2, Sparkles, Phone, User, ChevronDown, CheckCircle, RefreshCw } from 'lucide-react';
 
 const SIGNUP_SOURCES = [
   { value: '', label: '가입 경로 선택' },
@@ -30,6 +30,9 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, onGuestBro
   const [isRegister, setIsRegister] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [showVerification, setShowVerification] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,23 +84,21 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, onGuestBro
         });
         if (error) throw error;
 
-        // 회원가입 후 바로 로그인 시도
-        if (data.user) {
-          const { error: loginError } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-          });
-          if (!loginError) {
-            onLoginSuccess();
-            return;
-          }
+        // 이메일 인증이 필요한 경우 → 인증 안내 화면 표시
+        if (data.user && !data.session) {
+          setShowVerification(true);
+          startResendCooldown();
+          return;
         }
 
-        setSuccessMessage("회원가입이 완료되었습니다! 로그인해주세요.");
-        setIsRegister(false);
-        setPassword('');
-        setPhone('');
-        setSignupSource('');
+        // 이메일 인증이 비활성화된 경우 바로 로그인
+        if (data.session) {
+          onLoginSuccess();
+          return;
+        }
+
+        setShowVerification(true);
+        startResendCooldown();
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
@@ -121,6 +122,49 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, onGuestBro
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const startResendCooldown = () => {
+    setResendCooldown(60);
+    const timer = setInterval(() => {
+      setResendCooldown(prev => {
+        if (prev <= 1) { clearInterval(timer); return 0; }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const handleResendVerification = async () => {
+    if (resendCooldown > 0 || resendLoading) return;
+    setResendLoading(true);
+    setError(null);
+
+    try {
+      const redirectUrl = window.location.hostname === 'localhost'
+        ? 'https://opening.run'
+        : window.location.origin;
+
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email,
+        options: { emailRedirectTo: redirectUrl },
+      });
+      if (error) throw error;
+      setSuccessMessage('인증 메일이 재발송되었습니다.');
+      startResendCooldown();
+    } catch (err: any) {
+      setError(err.message || '재발송에 실패했습니다.');
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
+  const handleBackToLogin = () => {
+    setShowVerification(false);
+    setIsRegister(false);
+    setPassword('');
+    setError(null);
+    setSuccessMessage(null);
   };
 
   const handleGuestLogin = () => {
@@ -159,6 +203,64 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, onGuestBro
 
         {/* Auth Card */}
         <div className="glass-panel rounded-3xl p-8 backdrop-blur-xl">
+          {showVerification ? (
+            /* 이메일 인증 안내 화면 */
+            <div className="text-center space-y-5">
+              <div className="w-16 h-16 rounded-full bg-brand-50 flex items-center justify-center mx-auto">
+                <Mail size={28} className="text-brand-600" />
+              </div>
+              <div>
+                <h2 className="text-xl font-black text-slate-900 mb-2">이메일 인증이 필요합니다</h2>
+                <p className="text-sm text-slate-500 leading-relaxed">
+                  <span className="font-bold text-brand-600">{email}</span>으로<br />
+                  인증 메일을 보내드렸습니다.
+                </p>
+              </div>
+
+              <div className="bg-slate-50 rounded-xl p-4 text-left space-y-2">
+                <p className="text-sm font-bold text-slate-700">인증 방법</p>
+                <ol className="text-sm text-slate-600 space-y-1.5 list-decimal list-inside">
+                  <li>이메일 받은편지함을 확인해주세요</li>
+                  <li><span className="font-medium">"Confirm your signup"</span> 메일을 열어주세요</li>
+                  <li>메일 내 인증 링크를 클릭하면 완료!</li>
+                </ol>
+                <p className="text-xs text-slate-400 mt-2">스팸/정크 폴더도 확인해주세요</p>
+              </div>
+
+              {error && (
+                <div className="p-3 bg-red-50 text-red-600 text-sm font-medium rounded-lg flex items-center gap-2">
+                  <span>⚠️</span> {error}
+                </div>
+              )}
+              {successMessage && (
+                <div className="p-3 bg-green-50 text-green-600 text-sm font-medium rounded-lg flex items-center gap-2">
+                  <CheckCircle size={16} /> {successMessage}
+                </div>
+              )}
+
+              <button
+                onClick={handleResendVerification}
+                disabled={resendCooldown > 0 || resendLoading}
+                className="w-full py-3 px-4 rounded-xl border-2 border-slate-200 text-slate-700 font-bold hover:bg-slate-50 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {resendLoading ? (
+                  <Loader2 size={18} className="animate-spin" />
+                ) : (
+                  <RefreshCw size={18} />
+                )}
+                {resendCooldown > 0 ? `재발송 (${resendCooldown}초)` : '인증 메일 재발송'}
+              </button>
+
+              <button
+                onClick={handleBackToLogin}
+                className="w-full py-3 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold shadow-lg shadow-brand-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+              >
+                인증 완료 후 로그인하기
+              </button>
+            </div>
+          ) : (
+          /* 기존 로그인/회원가입 폼 */
+          <>
           <div className="flex gap-4 mb-8 p-1 bg-slate-100/50 rounded-xl">
             <button 
               onClick={() => setIsRegister(false)}
@@ -235,11 +337,11 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, onGuestBro
               <div className="relative group">
                 <Mail className="absolute left-4 top-3.5 text-slate-400 group-focus-within:text-brand-500 transition-colors" size={20} />
                 <input
-                  type="text"
+                  type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full bg-slate-50 border-none rounded-xl py-3.5 pl-12 pr-4 text-slate-900 font-medium focus:ring-2 focus:ring-brand-500 transition-all placeholder:text-slate-400"
-                  placeholder="이메일 또는 아이디"
+                  placeholder="이메일 주소"
                   required
                 />
               </div>
@@ -249,8 +351,8 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, onGuestBro
               <label className="text-xs font-bold text-slate-500 ml-1">비밀번호</label>
               <div className="relative group">
                 <Lock className="absolute left-4 top-3.5 text-slate-400 group-focus-within:text-brand-500 transition-colors" size={20} />
-                <input 
-                  type="password" 
+                <input
+                  type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full bg-slate-50 border-none rounded-xl py-3.5 pl-12 pr-4 text-slate-900 font-medium focus:ring-2 focus:ring-brand-500 transition-all placeholder:text-slate-400"
@@ -258,6 +360,9 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, onGuestBro
                   required
                 />
               </div>
+              {isRegister && (
+                <p className="text-xs text-slate-400 ml-1">영문 + 숫자 포함 8자 이상</p>
+              )}
             </div>
 
             {error && (
@@ -301,6 +406,8 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, onGuestBro
                 게스트로 둘러보기
              </button>
           </div>
+          </>
+          )}
         </div>
 
         <p className="text-center text-xs text-slate-400 mt-8">

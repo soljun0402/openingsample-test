@@ -1,9 +1,11 @@
 // 서울 열린데이터 API 연동 유틸리티
 // API: 유동인구(OA-15568), 점포수(OA-15577), 추정매출(OA-15572)
-// Vite 프록시 경로: /api/seoul → openapi.seoul.go.kr:8088
+// 프로덕션: /api/seoul-data (Vercel Serverless Function)
+// 개발: Vite 프록시 → openapi.seoul.go.kr:8088
 
 import { DONG_INFO_ALL } from '../data/seoulDistricts';
 
+const IS_DEV = import.meta.env.DEV;
 const SEOUL_API_KEY = import.meta.env.VITE_SEOUL_DATA_KEY || '';
 const CACHE_TTL = 30 * 60 * 1000; // 30분
 const API_MAX_ROWS = 1000; // 서울 API 1회 최대 요청 건수
@@ -95,7 +97,11 @@ function setCache(dong: string, category: string, data: MarketAnalysisData): voi
 
 // ─── API 호출 헬퍼 ───
 async function fetchSeoulApi(serviceName: string, startIdx: number, endIdx: number): Promise<any> {
-  const url = `/api/seoul/${SEOUL_API_KEY}/json/${serviceName}/${startIdx}/${endIdx}`;
+  // 개발: Vite 프록시 (API 키 포함 경로)
+  // 프로덕션: Vercel Serverless Function (키는 서버에서 주입)
+  const url = IS_DEV
+    ? `/api/seoul/${SEOUL_API_KEY}/json/${serviceName}/${startIdx}/${endIdx}`
+    : `/api/seoul-data?service=${serviceName}&start=${startIdx}&end=${endIdx}`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Seoul API ${serviceName}: ${res.status}`);
   return res.json();
@@ -157,6 +163,38 @@ async function fetchLatestQuarterRowsBatch(serviceName: string, batchCount: numb
   return allRows.filter((row: any) => row.STDR_YYQU_CD === latestQuarter);
 }
 
+// ─── 최신 분기 데이터 가져오기 (앞에서부터, 최신→과거 정렬 API용) ───
+// 점포수 API(VwsmTrdarStorQq)는 최신→과거 순 정렬이므로 앞에서 가져옴
+async function fetchFirstRowsBatch(serviceName: string, batchCount: number): Promise<any[]> {
+  const total = await getTotalCount(serviceName);
+  if (total === 0) return [];
+
+  // 앞에서부터 batchCount * 1000 행을 병렬로 가져옴 (total 상한 적용)
+  const promises: Promise<any[]>[] = [];
+  for (let i = 0; i < batchCount; i++) {
+    const startIdx = i * API_MAX_ROWS + 1;
+    const endIdx = Math.min((i + 1) * API_MAX_ROWS, total);
+    if (startIdx > total) break;
+    promises.push(
+      fetchSeoulApi(serviceName, startIdx, endIdx)
+        .then(data => data?.[serviceName]?.row || [])
+        .catch(() => [] as any[])
+    );
+  }
+
+  const results = await Promise.all(promises);
+  const allRows = results.flat();
+  if (allRows.length === 0) return [];
+
+  // 최신 분기 코드만 필터링 (앞쪽이 최신이므로 max로 찾으면 됨)
+  const latestQuarter = allRows.reduce((max: string, row: any) => {
+    const q = row.STDR_YYQU_CD || '';
+    return q > max ? q : max;
+  }, '');
+
+  return allRows.filter((row: any) => row.STDR_YYQU_CD === latestQuarter);
+}
+
 // ─── 동 이름으로 상권 매칭 ───
 function findMatchingRows(rows: any[], dong: string): any[] {
   if (!rows || !Array.isArray(rows)) return [];
@@ -207,10 +245,10 @@ async function fetchPopulation(dong: string): Promise<MarketAnalysisData['popula
 }
 
 // ─── 점포수 데이터 (OA-15577, VwsmTrdarStorQq) ───
-// 전체 ~2M+건 → 끝에서 5배치(5,000행) 가져와서 동+업종 매칭
+// 주의: 점포수 API는 최신→과거 순 정렬 → 앞에서부터 조회
 async function fetchStoreData(dong: string, category: string): Promise<MarketAnalysisData['stores'] | null> {
   try {
-    const rows = await fetchLatestQuarterRowsBatch('VwsmTrdarStorQq', 5);
+    const rows = await fetchFirstRowsBatch('VwsmTrdarStorQq', 5);
     if (rows.length === 0) return null;
 
     const dongMatches = findMatchingRows(rows, dong);
@@ -226,14 +264,13 @@ async function fetchStoreData(dong: string, category: string): Promise<MarketAna
     for (const row of dongMatches) {
       const stores = Number(row.STOR_CO || 0);
       totalStores += stores;
-      franchiseStores += Number(row.FRN_STOR_CO || 0);
+      franchiseStores += Number(row.FRC_STOR_CO || 0);
 
       const industryName = row.SVC_INDUTY_CD_NM || '';
       if (matchesCategory(industryName, category)) {
         similarStores += stores;
       }
 
-      // 개폐업률은 평균으로 계산
       const openRate = Number(row.OPBIZ_RT || 0);
       const closeRate = Number(row.CLSBIZ_RT || 0);
       if (openRate > 0 || closeRate > 0) {
@@ -257,10 +294,10 @@ async function fetchStoreData(dong: string, category: string): Promise<MarketAna
 }
 
 // ─── 추정매출 데이터 (OA-15572, VwsmTrdarSelngQq) ───
-// 전체 ~577K건 → 끝에서 3배치(3,000행) 가져와서 동+업종 매칭
+// 전체 ~577K건 → 끝에서 5배치(5,000행) 가져와서 동+업종 매칭
 async function fetchSalesData(dong: string, category: string): Promise<MarketAnalysisData['sales'] | null> {
   try {
-    const rows = await fetchLatestQuarterRowsBatch('VwsmTrdarSelngQq', 3);
+    const rows = await fetchLatestQuarterRowsBatch('VwsmTrdarSelngQq', 5);
     if (rows.length === 0) return null;
 
     const dongMatches = findMatchingRows(rows, dong);

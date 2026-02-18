@@ -113,6 +113,8 @@ const SYSTEM_PROMPT = `당신은 한국 소상공인 창업 전문 컨설턴트 
 2. 모든 텍스트는 한국어로 작성하세요.
 3. 입력된 지역명, 업종, 상권 수치, 체크리스트 항목명을 구체적으로 반영하세요.
 4. status가 "worry"인 항목은 실행 가능한 해결 방안을 반드시 제시하세요.
+   status가 "unchecked"인 항목은 간단한 안내와 다음 단계만 제시하세요.
+   status가 "done"인 항목은 긍정적 피드백과 추가 팁만 제시하세요.
 5. 과장 없이 현실적이고 실행 가능한 조언만 제공하세요.
 6. riskFactors는 반드시 해당 업종+지역 조합의 실질적 리스크만 포함하세요.
 
@@ -192,7 +194,7 @@ const OUTPUT_SCHEMA_DESCRIPTION = `응답 JSON 스키마:
   },
   "checklistAdvice": [{
     "itemId": "string (입력 checklist[].id와 정확히 매칭)",
-    "status": "'done' | 'worry'",
+    "status": "'done' | 'worry' | 'unchecked'",
     "advice": "string (100자 이내)",
     "actionSteps": ["string (각 70자 이내, 2~3개)"],
     "costTip": "string (60자 이내, worry 필수)",
@@ -291,12 +293,24 @@ export function buildReportInput(params: BuildReportInputParams): AIReportInput 
       title: item.title,
       category: item.category,
       description: item.description,
-      status: item.status === 'done' ? 'done' as const : 'worry' as const,
+      status: item.status,
       isRequired: item.isRequired,
       estimatedCost: item.estimatedCost,
       comment: item.comment,
     })),
   };
+}
+
+// ─── 유저 코멘트 sanitize ───
+
+function sanitizeComment(text: string): string {
+  if (!text) return '';
+  return text
+    .slice(0, 200)
+    .replace(/\n/g, ' ')
+    .replace(/#{2,}/g, '')
+    .replace(/^(system|user|assistant):/gi, '')
+    .trim();
 }
 
 // ─── 유저 메시지 조합 ───
@@ -362,7 +376,7 @@ function buildUserMessage(input: AIReportInput): string {
   const checklistSection = `
 ## 체크리스트 현황 (done: ${doneItems.length}개 / worry: ${worryItems.length}개)
 ${input.checklist.map(c =>
-  `- [${c.status}] ${c.title} (${c.category}) — ${c.description}${c.comment ? ` / 사용자 메모: "${c.comment}"` : ''} / 예상비용: ${c.estimatedCost.min}~${c.estimatedCost.max}${c.estimatedCost.unit}`
+  `- [${c.status}] ${c.title} (${c.category}) — ${c.description}${c.comment ? ` / 사용자 메모: "${sanitizeComment(c.comment)}"` : ''} / 예상비용: ${c.estimatedCost.min}~${c.estimatedCost.max}${c.estimatedCost.unit}`
 ).join('\n')}`;
 
   return `다음 창업 정보를 분석하여 보고서 JSON을 생성해주세요.
@@ -394,49 +408,77 @@ ${OUTPUT_SCHEMA_DESCRIPTION}`;
 
 // ─── Gemini API 호출 ───
 
+const IS_DEV = import.meta.env.DEV;
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
-const GEMINI_TIMEOUT = 40000; // 40초
+const GEMINI_TIMEOUT = 60000; // 60초
+const MAX_RETRIES = 2;
+
+async function callGeminiApi(requestBody: object, signal: AbortSignal): Promise<Response> {
+  if (IS_DEV) {
+    // 개발: Vite 프록시 (API 키 포함)
+    return fetch(`/api/gemini/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal,
+      body: JSON.stringify(requestBody),
+    });
+  }
+  // 프로덕션: Vercel Serverless Function (키는 서버에서 주입)
+  return fetch('/api/generate-report', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    signal,
+    body: JSON.stringify(requestBody),
+  });
+}
 
 export async function generateAIReport(input: AIReportInput): Promise<AIReportOutput | null> {
-  if (!GEMINI_API_KEY) {
+  if (IS_DEV && !GEMINI_API_KEY) {
     console.warn('VITE_GEMINI_API_KEY가 설정되지 않았습니다. AI 보고서를 건너뜁니다.');
     return null;
   }
 
   const userMessage = buildUserMessage(input);
 
+  const requestBody = {
+    contents: [
+      {
+        role: 'user',
+        parts: [{ text: userMessage }],
+      },
+    ],
+    systemInstruction: {
+      parts: [{ text: SYSTEM_PROMPT }],
+    },
+    generationConfig: {
+      temperature: 0.7,
+      topP: 0.9,
+      responseMimeType: 'application/json',
+    },
+  };
+
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), GEMINI_TIMEOUT);
 
   try {
-    const apiUrl = import.meta.env.DEV
-      ? '/api/gemini/v1beta/models/gemini-2.5-flash:generateContent'
-      : `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`;
+    let res: Response | null = null;
 
-    const res = await fetch(`${apiUrl}?key=${GEMINI_API_KEY}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      signal: controller.signal,
-      body: JSON.stringify({
-        contents: [
-          {
-            role: 'user',
-            parts: [{ text: userMessage }],
-          },
-        ],
-        systemInstruction: {
-          parts: [{ text: SYSTEM_PROMPT }],
-        },
-        generationConfig: {
-          temperature: 0.7,
-          topP: 0.9,
-          responseMimeType: 'application/json',
-        },
-      }),
-    });
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      res = await callGeminiApi(requestBody, controller.signal);
 
-    if (!res.ok) {
-      console.error('Gemini API 오류:', res.status, await res.text());
+      // 429 Rate Limit → 대기 후 재시도
+      if (res.status === 429 && attempt < MAX_RETRIES) {
+        const retryAfter = parseInt(res.headers.get('retry-after') || '0', 10);
+        const waitMs = Math.max((retryAfter || 10) * 1000, 5000 * (attempt + 1));
+        console.warn(`Gemini 429 Rate Limit — ${Math.round(waitMs / 1000)}초 후 재시도 (${attempt + 1}/${MAX_RETRIES})`);
+        await new Promise(r => setTimeout(r, waitMs));
+        continue;
+      }
+      break;
+    }
+
+    if (!res || !res.ok) {
+      console.error('Gemini API 오류:', res?.status);
       return null;
     }
 
@@ -454,7 +496,7 @@ export async function generateAIReport(input: AIReportInput): Promise<AIReportOu
     try {
       parsed = JSON.parse(cleanText);
     } catch (parseErr) {
-      console.error('AI 응답 JSON 파싱 실패:', parseErr, 'Raw:', text.slice(0, 300));
+      if (IS_DEV) console.error('AI 응답 JSON 파싱 실패:', parseErr, 'Raw:', text.slice(0, 300));
       return null;
     }
 

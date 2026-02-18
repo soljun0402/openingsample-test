@@ -325,21 +325,24 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
     }
   }, [businessCategory]);
 
-  // Step 3 진입 시 상권 데이터 로드 (업종별 점포수+매출 포함)
+  // 동 선택 즉시 상권 데이터 로드 (Step 2에서 선택 시 바로 API 호출)
   useEffect(() => {
-    if (currentStep === 3 && dong) {
-      setMarketDataLoading(true);
-      getMarketAnalysis(dong, businessCategory)
-        .then(data => setMarketData(data))
-        .catch(() => setMarketData(null))
-        .finally(() => setMarketDataLoading(false));
+    if (!dong || !businessCategory) {
+      setMarketData(null);
+      return;
     }
-  }, [currentStep, dong, businessCategory]);
 
-  // dong 변경 시 marketData 초기화
-  useEffect(() => {
+    let cancelled = false;
     setMarketData(null);
-  }, [dong]);
+    setMarketDataLoading(true);
+
+    getMarketAnalysis(dong, businessCategory)
+      .then(data => { if (!cancelled) setMarketData(data); })
+      .catch(() => { if (!cancelled) setMarketData(null); })
+      .finally(() => { if (!cancelled) setMarketDataLoading(false); });
+
+    return () => { cancelled = true; };
+  }, [dong, businessCategory]);
 
   // 결과 데이터
   const [estimatedCosts, setEstimatedCosts] = useState<{ min: number; max: number }>({ min: 0, max: 0 });
