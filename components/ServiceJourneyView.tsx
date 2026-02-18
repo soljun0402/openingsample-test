@@ -2028,13 +2028,14 @@ export const ServiceJourneyView: React.FC<ServiceJourneyViewProps> = ({ onBack, 
                 const total = Math.max(checklist.length, 1);
                 const doneCount = checklist.filter(i => i.status === 'done').length;
                 const worryCount = checklist.filter(i => i.status === 'worry').length;
-                const simpleScore = Math.round((doneCount * 100 + worryCount * 30) / total);
+                const rawScore = Math.round((doneCount * 100 + worryCount * 30) / total);
+                const simpleScore = Math.min(rawScore, 90); // 만점 90 — 나머지 10점은 전문가 컨설팅
                 const simpleComment = simpleScore >= 80
-                  ? `준비가 거의 완료됐습니다! 남은 항목만 마무리하면 오픈 준비 끝!`
+                  ? `거의 다 준비됐어요! 오프닝 매니저와 마지막 점검만 남았습니다.`
                   : simpleScore >= 50
-                  ? `절반 이상 준비됐어요. 도움 필요 항목을 하나씩 해결해 보세요.`
+                  ? `절반 이상 준비됐어요. 전문 매니저가 나머지를 도와드릴게요.`
                   : simpleScore >= 20
-                  ? `아직 준비할 게 많아요. 체크리스트를 하나씩 체크해 보세요.`
+                  ? `아직 준비할 게 많아요. 매니저와 함께 하나씩 해결해 보세요.`
                   : `체크리스트를 확인하고 준비 상태를 체크해 주세요.`;
 
                 const data: EstimatePDFProps = {
