@@ -355,12 +355,13 @@ function buildUserMessage(input: AIReportInput): string {
   let salesSection = '';
   if (apiData.sales) {
     const sl = apiData.sales;
-    const monthlyWon = sl.monthlyAmount >= 10000
-      ? `${Math.round(sl.monthlyAmount / 10000).toLocaleString()}만원`
-      : `${sl.monthlyAmount.toLocaleString()}원`;
+    const formatWon = (amt: number) => amt >= 10000
+      ? `${Math.round(amt / 10000).toLocaleString()}만원`
+      : `${amt.toLocaleString()}원`;
     salesSection = `
 ### 추정매출 [${apiData.salesSource === 'api' ? 'API 실데이터' : '추정치'}]
-- 동종업종(${business.categoryLabel}) 월 추정매출: ${monthlyWon}
+- 동종업종(${business.categoryLabel}) 지역 전체 월 추정매출: ${formatWon(sl.monthlyAmount)} (${sl.areaCount}개 상권 합산)
+- 점포당 월 평균 추정매출: ${formatWon(sl.perStoreMonthly)}
 - 월 추정 거래건수: ${sl.monthlyCount.toLocaleString()}건
 - 주중/주말 매출비: ${sl.weekdayRatio}% / ${sl.weekendRatio}%`;
   } else {
@@ -410,7 +411,7 @@ ${OUTPUT_SCHEMA_DESCRIPTION}`;
 
 const IS_DEV = import.meta.env.DEV;
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
-const GEMINI_TIMEOUT = 60000; // 60초
+const GEMINI_TIMEOUT = 90000; // 90초
 const MAX_RETRIES = 2;
 
 async function callGeminiApi(requestBody: object, signal: AbortSignal): Promise<Response> {
@@ -521,7 +522,7 @@ export async function generateAIReport(input: AIReportInput): Promise<AIReportOu
     return parsed;
   } catch (err) {
     if (err instanceof DOMException && err.name === 'AbortError') {
-      console.warn('Gemini API 타임아웃 (60초 초과)');
+      console.warn('Gemini API 타임아웃 (90초 초과)');
     } else {
       console.error('AI 보고서 생성 실패:', err);
     }

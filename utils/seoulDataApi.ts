@@ -56,9 +56,11 @@ export interface MarketAnalysisData {
   sales?: {
     quarterlyAmount: number;
     monthlyAmount: number;
+    perStoreMonthly: number;  // 점포당 월 추정매출
     monthlyCount: number;
     weekdayRatio: number;
     weekendRatio: number;
+    areaCount: number;        // 매칭된 상권 수
   };
   source: 'api' | 'fallback';
   storesSource?: 'api' | 'fallback';
@@ -259,7 +261,7 @@ async function fetchPopulation(dong: string): Promise<MarketAnalysisData['popula
 async function fetchStoreData(dong: string, category: string): Promise<MarketAnalysisData['stores'] | null> {
   try {
     console.log(`[서울API] 점포수 조회 시작: ${dong} / ${category}`);
-    const rows = await fetchFirstRowsBatch('VwsmTrdarStorQq', 5);
+    const rows = await fetchFirstRowsBatch('VwsmTrdarStorQq', 20);
     if (rows.length === 0) { console.warn(`[서울API] 점포수: 데이터 없음`); return null; }
 
     const dongMatches = findMatchingRows(rows, dong);
@@ -273,12 +275,14 @@ async function fetchStoreData(dong: string, category: string): Promise<MarketAna
     let closeRateSum = 0;
     let rateCount = 0;
 
+    const industryNames: string[] = [];
     for (const row of dongMatches) {
       const stores = Number(row.STOR_CO || 0);
       totalStores += stores;
       franchiseStores += Number(row.FRC_STOR_CO || 0);
 
       const industryName = row.SVC_INDUTY_CD_NM || '';
+      industryNames.push(industryName);
       if (matchesCategory(industryName, category)) {
         similarStores += stores;
       }
@@ -291,6 +295,8 @@ async function fetchStoreData(dong: string, category: string): Promise<MarketAna
         rateCount++;
       }
     }
+    console.log(`[서울API] 점포수: 업종목록 →`, [...new Set(industryNames)].join(', '));
+    console.log(`[서울API] 점포수: 총${totalStores} 동종${similarStores} 프랜${franchiseStores}`);
 
     return {
       total: totalStores,
@@ -337,12 +343,19 @@ async function fetchSalesData(dong: string, category: string): Promise<MarketAna
     }
 
     // 분기 데이터 → 월 평균으로 변환
+    const monthlyTotal = Math.round(totalAmount / 3);
+    const areaCount = catMatches.length;
+    // 점포당 월 매출 = 월 총매출 / 매칭 상권 수 (상권당 평균 1점포 가정)
+    const perStore = areaCount > 0 ? Math.round(monthlyTotal / areaCount) : monthlyTotal;
+    console.log(`[서울API] 추정매출: 월총${monthlyTotal}원 / ${areaCount}개 상권 / 점포당≈${perStore}원`);
     return {
       quarterlyAmount: totalAmount,
-      monthlyAmount: Math.round(totalAmount / 3),
+      monthlyAmount: monthlyTotal,
+      perStoreMonthly: perStore,
       monthlyCount: Math.round(totalCount / 3),
       weekdayRatio: totalAmount > 0 ? Math.round(weekdayAmount / totalAmount * 100) : 0,
       weekendRatio: totalAmount > 0 ? Math.round(weekendAmount / totalAmount * 100) : 0,
+      areaCount,
     };
   } catch (e) {
     console.warn('추정매출 API 실패:', e);
