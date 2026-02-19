@@ -102,9 +102,17 @@ async function fetchSeoulApi(serviceName: string, startIdx: number, endIdx: numb
   const url = IS_DEV
     ? `/api/seoul/${SEOUL_API_KEY}/json/${serviceName}/${startIdx}/${endIdx}`
     : `/api/seoul-data?service=${serviceName}&start=${startIdx}&end=${endIdx}`;
+  console.log(`[서울API] 요청: ${serviceName} [${startIdx}~${endIdx}] → ${IS_DEV ? 'Vite프록시' : 'Vercel'}`);
   const res = await fetch(url);
-  if (!res.ok) throw new Error(`Seoul API ${serviceName}: ${res.status}`);
-  return res.json();
+  if (!res.ok) {
+    console.error(`[서울API] 실패: ${serviceName} ${res.status} ${res.statusText}`);
+    throw new Error(`Seoul API ${serviceName}: ${res.status}`);
+  }
+  const data = await res.json();
+  const rowCount = data?.[serviceName]?.row?.length ?? 0;
+  const totalCount = data?.[serviceName]?.list_total_count ?? '?';
+  console.log(`[서울API] 응답: ${serviceName} — 행 ${rowCount}건 (전체 ${totalCount}건)`);
+  return data;
 }
 
 async function getTotalCount(serviceName: string): Promise<number> {
@@ -209,10 +217,12 @@ function findMatchingRows(rows: any[], dong: string): any[] {
 // 전체 ~44K건, 분기당 ~1,000건 → 1배치로 충분
 async function fetchPopulation(dong: string): Promise<MarketAnalysisData['population'] | null> {
   try {
+    console.log(`[서울API] 유동인구 조회 시작: ${dong}`);
     const rows = await fetchLatestQuarterRows('VwsmTrdarFlpopQq');
-    if (rows.length === 0) return null;
+    if (rows.length === 0) { console.warn(`[서울API] 유동인구: 데이터 없음`); return null; }
 
     const matches = findMatchingRows(rows, dong);
+    console.log(`[서울API] 유동인구: 전체 ${rows.length}건 → 동 매칭 ${matches.length}건`);
     if (matches.length === 0) return null;
 
     let total = 0, male = 0, female = 0;
@@ -248,10 +258,12 @@ async function fetchPopulation(dong: string): Promise<MarketAnalysisData['popula
 // 주의: 점포수 API는 최신→과거 순 정렬 → 앞에서부터 조회
 async function fetchStoreData(dong: string, category: string): Promise<MarketAnalysisData['stores'] | null> {
   try {
+    console.log(`[서울API] 점포수 조회 시작: ${dong} / ${category}`);
     const rows = await fetchFirstRowsBatch('VwsmTrdarStorQq', 5);
-    if (rows.length === 0) return null;
+    if (rows.length === 0) { console.warn(`[서울API] 점포수: 데이터 없음`); return null; }
 
     const dongMatches = findMatchingRows(rows, dong);
+    console.log(`[서울API] 점포수: 전체 ${rows.length}건 → 동 매칭 ${dongMatches.length}건`);
     if (dongMatches.length === 0) return null;
 
     let totalStores = 0;
@@ -297,16 +309,18 @@ async function fetchStoreData(dong: string, category: string): Promise<MarketAna
 // 전체 ~577K건 → 끝에서 5배치(5,000행) 가져와서 동+업종 매칭
 async function fetchSalesData(dong: string, category: string): Promise<MarketAnalysisData['sales'] | null> {
   try {
+    console.log(`[서울API] 추정매출 조회 시작: ${dong} / ${category}`);
     const rows = await fetchLatestQuarterRowsBatch('VwsmTrdarSelngQq', 5);
-    if (rows.length === 0) return null;
+    if (rows.length === 0) { console.warn(`[서울API] 추정매출: 데이터 없음`); return null; }
 
     const dongMatches = findMatchingRows(rows, dong);
-    if (dongMatches.length === 0) return null;
+    if (dongMatches.length === 0) { console.warn(`[서울API] 추정매출: 동 매칭 없음`); return null; }
 
     // 업종 매칭 (동종 업종의 매출만 합산)
     const catMatches = dongMatches.filter(row =>
       matchesCategory(row.SVC_INDUTY_CD_NM || '', category)
     );
+    console.log(`[서울API] 추정매출: 전체 ${rows.length}건 → 동 ${dongMatches.length}건 → 업종 ${catMatches.length}건`);
 
     if (catMatches.length === 0) return null;
 
@@ -364,12 +378,15 @@ function createFallbackData(dong: string): MarketAnalysisData {
 
 // ─── 메인 함수 ───
 export async function getMarketAnalysis(dong: string, category: string = ''): Promise<MarketAnalysisData> {
+  console.log(`[서울API] ===== 상권분석 시작: ${dong} / ${category} =====`);
+
   // 1. 캐시 확인
   const cached = getCached(dong, category);
-  if (cached) return cached;
+  if (cached) { console.log(`[서울API] 캐시 히트 (${dong}/${category})`); return cached; }
 
   // 2. API 키 없으면 바로 fallback
   if (!SEOUL_API_KEY) {
+    console.warn(`[서울API] API 키 없음 → fallback 사용`);
     const fallback = createFallbackData(dong);
     setCache(dong, category, fallback);
     return fallback;
@@ -377,6 +394,8 @@ export async function getMarketAnalysis(dong: string, category: string = ''): Pr
 
   // 3. 유동인구 + 점포수 + 추정매출 API 병렬 호출
   try {
+    console.log(`[서울API] 3개 API 병렬 호출 시작...`);
+    const startTime = Date.now();
     const [population, stores, sales] = await Promise.all([
       fetchPopulation(dong),
       category ? fetchStoreData(dong, category) : Promise.resolve(null),
@@ -385,7 +404,11 @@ export async function getMarketAnalysis(dong: string, category: string = ''): Pr
 
     const fallbackInfo = DONG_INFO_ALL[dong];
 
+    const elapsed = Date.now() - startTime;
+    console.log(`[서울API] 병렬 호출 완료 (${elapsed}ms) — 유동인구:${population ? 'OK' : 'NULL'} / 점포:${stores ? 'OK' : 'NULL'} / 매출:${sales ? 'OK' : 'NULL'}`);
+
     if (!population && !stores && !sales) {
+      console.warn(`[서울API] 3개 API 모두 데이터 없음 → fallback`);
       const fallback = createFallbackData(dong);
       setCache(dong, category, fallback);
       return fallback;
@@ -412,10 +435,17 @@ export async function getMarketAnalysis(dong: string, category: string = ''): Pr
       salesSource: sales ? 'api' : 'fallback',
     };
 
+    console.log(`[서울API] ===== 결과 =====`, {
+      footTraffic: result.footTraffic,
+      competitors: result.competitors,
+      stores: result.stores ? `총${result.stores.total} 동종${result.stores.similarCount} 프랜${result.stores.franchiseCount}` : 'N/A',
+      sales: result.sales ? `월${(result.sales.monthlyAmount / 10000).toFixed(0)}만` : 'N/A',
+      source: result.source,
+    });
     setCache(dong, category, result);
     return result;
   } catch (e) {
-    console.warn('서울 데이터 API 전체 실패, fallback 사용:', e);
+    console.error('[서울API] 전체 실패, fallback 사용:', e);
     const fallback = createFallbackData(dong);
     setCache(dong, category, fallback);
     return fallback;
