@@ -407,23 +407,19 @@ ${checklistSection}
 ${OUTPUT_SCHEMA_DESCRIPTION}`;
 }
 
-// ─── Claude API 호출 ───
+// ─── Gemini API 호출 ───
 
 const IS_DEV = import.meta.env.DEV;
-const ANTHROPIC_API_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY || '';
-const API_TIMEOUT = 90000; // 90초
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
+const GEMINI_TIMEOUT = 90000; // 90초
 const MAX_RETRIES = 2;
 
-async function callClaudeApi(requestBody: object, signal: AbortSignal): Promise<Response> {
+async function callGeminiApi(requestBody: object, signal: AbortSignal): Promise<Response> {
   if (IS_DEV) {
     // 개발: Vite 프록시 (API 키 포함)
-    return fetch('/api/claude/v1/messages', {
+    return fetch(`/api/gemini/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
-      },
+      headers: { 'Content-Type': 'application/json' },
       signal,
       body: JSON.stringify(requestBody),
     });
@@ -438,29 +434,32 @@ async function callClaudeApi(requestBody: object, signal: AbortSignal): Promise<
 }
 
 export async function generateAIReport(input: AIReportInput): Promise<AIReportOutput | null> {
-  if (IS_DEV && !ANTHROPIC_API_KEY) {
-    console.warn('VITE_ANTHROPIC_API_KEY가 설정되지 않았습니다. AI 보고서를 건너뜁니다.');
+  if (IS_DEV && !GEMINI_API_KEY) {
+    console.warn('VITE_GEMINI_API_KEY가 설정되지 않았습니다. AI 보고서를 건너뜁니다.');
     return null;
   }
 
   const userMessage = buildUserMessage(input);
-  console.log('[AI Report] Claude API 호출 시작...');
 
   const requestBody = {
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: 4096,
-    system: SYSTEM_PROMPT,
-    messages: [
+    contents: [
       {
         role: 'user',
-        content: userMessage,
+        parts: [{ text: userMessage }],
       },
     ],
-    temperature: 0.7,
+    systemInstruction: {
+      parts: [{ text: SYSTEM_PROMPT }],
+    },
+    generationConfig: {
+      temperature: 0.7,
+      topP: 0.9,
+      responseMimeType: 'application/json',
+    },
   };
 
   const controller = new AbortController();
-  let timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+  let timeoutId = setTimeout(() => controller.abort(), GEMINI_TIMEOUT);
 
   try {
     let res: Response | null = null;
@@ -468,15 +467,15 @@ export async function generateAIReport(input: AIReportInput): Promise<AIReportOu
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
       // 재시도 시 타임아웃 리셋
       clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+      timeoutId = setTimeout(() => controller.abort(), GEMINI_TIMEOUT);
 
-      res = await callClaudeApi(requestBody, controller.signal);
+      res = await callGeminiApi(requestBody, controller.signal);
 
       // 429 Rate Limit → 대기 후 재시도
       if (res.status === 429 && attempt < MAX_RETRIES) {
         const retryAfter = parseInt(res.headers.get('retry-after') || '0', 10);
         const waitMs = Math.max((retryAfter || 10) * 1000, 5000 * (attempt + 1));
-        console.warn(`Claude 429 Rate Limit — ${Math.round(waitMs / 1000)}초 후 재시도 (${attempt + 1}/${MAX_RETRIES})`);
+        console.warn(`Gemini 429 Rate Limit — ${Math.round(waitMs / 1000)}초 후 재시도 (${attempt + 1}/${MAX_RETRIES})`);
         await new Promise(r => setTimeout(r, waitMs));
         continue;
       }
@@ -484,38 +483,25 @@ export async function generateAIReport(input: AIReportInput): Promise<AIReportOu
     }
 
     if (!res || !res.ok) {
-      if (IS_DEV) console.error('Claude API 오류:', res?.status);
+      if (IS_DEV) console.error('Gemini API 오류:', res?.status);
       return null;
     }
 
     const data = await res.json();
-
-    // Claude Messages API 응답 파싱
-    const textBlock = data?.content?.find((b: any) => b.type === 'text');
-    const text = textBlock?.text;
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (!text) {
-      console.error('Claude 응답에 텍스트가 없습니다:', data);
+      console.error('Gemini 응답에 텍스트가 없습니다:', data);
       return null;
     }
 
-    console.log('[AI Report] Claude 응답 수신, JSON 파싱 중...');
-
-    // JSON 블록 추출 (```json ... ``` 또는 순수 JSON)
-    const cleanText = text.replace(/^```json\s*\n?/i, '').replace(/\n?```\s*$/i, '').trim();
-
-    // JSON이 아닌 앞뒤 텍스트 제거
-    const jsonStart = cleanText.indexOf('{');
-    const jsonEnd = cleanText.lastIndexOf('}');
-    const jsonStr = (jsonStart >= 0 && jsonEnd > jsonStart)
-      ? cleanText.slice(jsonStart, jsonEnd + 1)
-      : cleanText;
+    const cleanText = text.replace(/^```json\s*\n?/i, '').replace(/\n?```\s*$/i, '');
 
     let parsed: AIReportOutput;
     try {
-      parsed = JSON.parse(jsonStr);
+      parsed = JSON.parse(cleanText);
     } catch (parseErr) {
-      if (IS_DEV) console.error('AI 응답 JSON 파싱 실패:', parseErr, 'Raw:', text.slice(0, 500));
+      if (IS_DEV) console.error('AI 응답 JSON 파싱 실패:', parseErr, 'Raw:', text.slice(0, 300));
       return null;
     }
 
@@ -533,11 +519,10 @@ export async function generateAIReport(input: AIReportInput): Promise<AIReportOu
       return null;
     }
 
-    console.log('[AI Report] AI 보고서 생성 완료', { score: parsed.summary.overallScore, grade: parsed.locationAnalysis.grade });
     return parsed;
   } catch (err) {
     if (err instanceof DOMException && err.name === 'AbortError') {
-      console.warn('Claude API 타임아웃 (90초 초과)');
+      console.warn('Gemini API 타임아웃 (90초 초과)');
     } else {
       console.error('AI 보고서 생성 실패:', err);
     }

@@ -13,10 +13,10 @@ export default defineConfig(({ mode }) => {
             changeOrigin: true,
             rewrite: (path) => path.replace(/^\/api\/seoul/, ''),
           },
-          '/api/claude': {
-            target: 'https://api.anthropic.com',
+          '/api/gemini': {
+            target: 'https://generativelanguage.googleapis.com',
             changeOrigin: true,
-            rewrite: (path) => path.replace(/^\/api\/claude/, ''),
+            rewrite: (path) => path.replace(/^\/api\/gemini/, ''),
           },
         },
       },
