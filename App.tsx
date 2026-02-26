@@ -12,8 +12,51 @@ import { AdminView } from './components/AdminView';
 import { PMPortalView } from './components/PMPortalView';
 import { LoginView } from './components/LoginView';
 import { DoorOpen, Loader2 } from 'lucide-react';
-  
+import { EstimateResultView } from './components/EstimateResultView';
+
 function App() {
+  // --- 강제 우회 코드: 로그인/결제 없이 PDF 결과 바로 확인 ---
+  const MOCK_BYPASS = true;
+  if (MOCK_BYPASS) {
+    const mockEstimateData = {
+      customerName: '예비 창업자',
+      totalCostRange: { min: 54000, max: 166000 },
+      locationData: {
+        region: '서울시 강남구 역삼동',
+        analysis: [
+          { label: '주요 타겟', value: '20-30대 직장인/주거' },
+          { label: '유동 인구', value: '일 평균 85,000명' },
+          { label: '경쟁 점포', value: '45개 (반경 500m)' }
+        ]
+      },
+      costBreakdown: [
+        { label: '보증금 및 권리금', min: 30000, max: 80000 },
+        { label: '임대차 계약', min: 5000, max: 50000 },
+        { label: '인테리어 공사', min: 15000, max: 40000 },
+        { label: '간판 설치', min: 2000, max: 8000 },
+        { label: 'POS·키오스크', min: 500, max: 1500 },
+        { label: 'CCTV·인터넷', min: 500, max: 1500 },
+        { label: '보건증·위생교육', min: 20, max: 70 },
+        { label: '휴게음식점 신고', min: 0, max: 50 },
+        { label: '커피머신·분쇄기', min: 6000, max: 35000 },
+        { label: '테이블·의자', min: 2000, max: 8000 },
+      ],
+      checklist: {
+        readyCount: 5,
+        worryCount: 7,
+        readyItems: ['사업자등록', '임대차 계약', '간판 설치', '보건증·위생교육', '휴게음식점 신고'],
+        worryItems: ['인테리어 공사', 'POS·키오스크', 'CCTV·인터넷', '인허가·서류 대행', '마케팅 세팅', '커피머신·분쇄기', '테이블·의자']
+      },
+      businessType: '카페/디저트',
+      marketGrade: 'A' as const,
+      simpleScore: 85,
+      simpleComment: '우수한 상권입니다. 성공적인 창업이 기대됩니다.',
+    };
+
+    return <EstimateResultView data={mockEstimateData} onBack={() => { }} />;
+  }
+  // --- 강제 우회 코드 끝 ---
+
   // 화면 상태
   const [showLanding, setShowLanding] = useState(true);
   const [showLogin, setShowLogin] = useState(false);

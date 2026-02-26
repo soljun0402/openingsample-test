@@ -1,5 +1,5 @@
 import React from 'react';
-import { Page, Text, View, Document, StyleSheet, Font } from '@react-pdf/renderer';
+import { Page, Text, View, Document, StyleSheet, Font, Image } from '@react-pdf/renderer';
 import type { AIReportOutput } from '../utils/aiReportApi';
 
 // Register Korean Font
@@ -15,42 +15,121 @@ Font.register({
 
 // ─── Constants ───
 const BRAND = '#1E6FFF';
-const BG = '#F0F6FF';
+const TEXT_MAIN = '#000000';
+const TEXT_SUB = '#666666';
+const TEXT_MUTED = '#999999';
+const LINE_COLOR = '#000000';
+const LINE_MUTED = '#E5E5E5';
 const GREEN = '#34C759';
 const ORANGE = '#FF9500';
-const RED = '#FF3B30';
-const PURPLE = '#6C3CE9';
+const BG_GRAY = '#F8F9FA';
 const F = 'NotoKR';
-
-// Text truncation
-const cut = (text: string | undefined, max: number) => {
-    if (!text) return '';
-    return text.length > max ? text.slice(0, max - 1) + '…' : text;
-};
 
 // ─── Styles ───
 const s = StyleSheet.create({
-    page: { padding: 32, paddingBottom: 50, backgroundColor: '#FFF', fontFamily: F },
-    h1: { fontSize: 28, fontWeight: 'bold', color: '#000', marginBottom: 2 },
-    h2: { fontSize: 16, fontWeight: 'bold', color: '#000', marginBottom: 2 },
-    h3: { fontSize: 10, fontWeight: 'bold', color: BRAND, marginBottom: 4, marginTop: 8, paddingBottom: 2, borderBottomWidth: 0.5, borderBottomColor: '#E5EDFF' },
-    h3d: { fontSize: 10, fontWeight: 'bold', color: '#000', marginBottom: 4, marginTop: 8, paddingBottom: 2, borderBottomWidth: 0.5, borderBottomColor: '#DDD' },
-    sub: { fontSize: 8, color: '#999', marginBottom: 10 },
-    b9: { fontSize: 8.5, color: '#333', lineHeight: 1.5, fontFamily: F },
-    s8: { fontSize: 7.5, color: '#666', lineHeight: 1.4, fontFamily: F },
-    bold: { fontSize: 8.5, fontWeight: 'bold', color: '#000', fontFamily: F },
-    lbl: { fontSize: 7, color: '#999', marginBottom: 1 },
-    card: { padding: 6, backgroundColor: '#F9FAFB', borderRadius: 3, marginBottom: 4 },
-    cardB: { padding: 6, backgroundColor: BG, borderRadius: 3, marginBottom: 4 },
-    dot: { width: 6, height: 6, borderRadius: 3, marginRight: 4, marginTop: 2 },
-    tRow: { flexDirection: 'row', borderBottomWidth: 0.5, borderBottomColor: '#EEE', paddingVertical: 4, alignItems: 'center' },
-    tL: { flex: 2, fontSize: 8.5, fontFamily: F },
-    tV: { flex: 1, fontSize: 8.5, textAlign: 'right', fontWeight: 'bold', fontFamily: F },
-    bRow: { flexDirection: 'row', marginBottom: 2, paddingLeft: 2 },
-    bDot: { fontSize: 8, color: BRAND, marginRight: 4, width: 6 },
-    ft: { position: 'absolute', bottom: 24, left: 32, right: 32, borderTopWidth: 0.5, borderTopColor: '#EEE', paddingTop: 6, flexDirection: 'row', justifyContent: 'space-between' },
-    ftT: { fontSize: 7, color: '#BBB' },
-    cta: { backgroundColor: '#F5F5F7', padding: 10, borderRadius: 3, marginTop: 8 },
+    page: {
+        paddingTop: 45,
+        paddingBottom: 60,
+        paddingHorizontal: 45,
+        backgroundColor: '#FFF',
+        fontFamily: F
+    },
+    logo: {
+        width: 100,
+        marginBottom: 30,
+    },
+    // Page 1 Header
+    h1: { fontSize: 36, fontWeight: 'bold', color: TEXT_MAIN, marginBottom: 8, letterSpacing: -0.5 },
+    preparedText: { fontSize: 10, color: TEXT_SUB, marginBottom: 16 }, // 여백 축소
+
+    // Page 1 Hero
+    heroTitle: { fontSize: 16, color: '#333', lineHeight: 1.5, marginBottom: 40, letterSpacing: -0.5 },
+    costRange: { fontSize: 28, fontWeight: 'bold', color: BRAND, marginBottom: 60 },
+    costLabel: { fontSize: 16, color: TEXT_MAIN, fontWeight: 'bold', letterSpacing: -0.5, marginBottom: 8 },
+
+    // Sections
+    sectionHeader: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: TEXT_MAIN,
+        letterSpacing: -0.5,
+        paddingBottom: 8,
+        borderBottomWidth: 1.5,
+        borderBottomColor: LINE_COLOR,
+        marginBottom: 12
+    },
+
+    // Grid (Location Analysis)
+    gridRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
+    gridCol: { flex: 1, paddingRight: 10 },
+    gridLabel: { fontSize: 7, color: TEXT_MUTED, marginBottom: 4 },
+    gridValue: { fontSize: 10, color: TEXT_MAIN },
+
+    // Details Page Header
+    h2: { fontSize: 32, fontWeight: 'bold', color: TEXT_MAIN, marginBottom: 30 },
+
+    // Cost Breakdown Table
+    tRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: LINE_MUTED
+    },
+    tLabel: { fontSize: 12, color: TEXT_MAIN },
+    tValue: { fontSize: 12, fontWeight: 'bold', color: TEXT_MAIN, textAlign: 'right' },
+
+    // Total Row
+    totalRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        paddingVertical: 16,
+    },
+    totalLabel: { fontSize: 12, fontWeight: 'bold', color: TEXT_MAIN },
+    totalValueBox: { alignItems: 'flex-end' },
+    totalValuePrimary: { fontSize: 13, fontWeight: 'bold', color: BRAND, marginBottom: 2 },
+    totalValueSecondary: { fontSize: 13, fontWeight: 'bold', color: BRAND },
+
+    // Checklist Page
+    scoreBoxRow: { flexDirection: 'row', gap: 10, marginBottom: 24, paddingBottom: 24, borderBottomWidth: 1, borderBottomColor: LINE_MUTED },
+    scoreBox: { flex: 1, padding: 16, backgroundColor: BG_GRAY, borderRadius: 8, alignItems: 'center' },
+    scoreLabel: { fontSize: 9, color: TEXT_SUB, marginBottom: 4 },
+    scoreValue: { fontSize: 24, fontWeight: 'bold', color: BRAND },
+
+    checklistContainer: { flexDirection: 'row', gap: 20 },
+    checklistCol: { flex: 1 },
+    checkColumnHeaderReady: { fontSize: 11, fontWeight: 'bold', color: GREEN, marginBottom: 12 },
+    checkColumnHeaderWorry: { fontSize: 11, fontWeight: 'bold', color: ORANGE, marginBottom: 12 },
+    checkItem: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+    checkDotReady: { width: 8, height: 8, borderRadius: 4, backgroundColor: GREEN, marginRight: 8 },
+    checkDotWorry: { width: 8, height: 8, borderRadius: 4, backgroundColor: ORANGE, marginRight: 8 },
+    checkText: { fontSize: 9.5, color: '#444' },
+
+    // Banner
+    ctaPanel: {
+        backgroundColor: BG_GRAY,
+        padding: 20,
+        borderRadius: 4,
+        marginTop: 40
+    },
+    ctaTitle: { fontSize: 11, fontWeight: 'bold', color: BRAND, marginBottom: 8 },
+    ctaDesc: { fontSize: 9, color: '#444', lineHeight: 1.6 },
+
+    // Footer
+    footerView: {
+        position: 'absolute',
+        bottom: 30,
+        left: 45,
+        right: 45,
+        borderTopWidth: 1,
+        borderTopColor: LINE_MUTED,
+        paddingTop: 10,
+        flexDirection: 'row',
+        justifyContent: 'space-between'
+    },
+    footerText: { fontSize: 8, color: TEXT_MUTED },
 });
 
 // ─── Types ───
@@ -73,8 +152,21 @@ export interface EstimatePDFProps {
 }
 
 // ─── Helpers ───
-const fmt = (amount: number) => {
-    let v = amount < 500000 ? amount * 10000 : amount;
+const fmtRange = (min: number, max: number) => {
+    const f = (val: number) => {
+        let v = val < 500000 ? val * 10000 : val;
+        if (v >= 100000000) {
+            const uk = Math.floor(v / 100000000);
+            const r = Math.floor((v % 100000000) / 10000);
+            return r > 0 ? `${uk}억 ${new Intl.NumberFormat('ko-KR').format(r)}만원` : `${uk}억원`;
+        }
+        return new Intl.NumberFormat('ko-KR').format(Math.floor(v / 10000)) + '만원';
+    };
+    return `${f(min)} ~ ${f(max)}`;
+};
+
+const fmtPrice = (val: number) => {
+    let v = val < 500000 ? val * 10000 : val;
     if (v >= 100000000) {
         const uk = Math.floor(v / 100000000);
         const r = Math.floor((v % 100000000) / 10000);
@@ -83,427 +175,172 @@ const fmt = (amount: number) => {
     return new Intl.NumberFormat('ko-KR').format(Math.floor(v / 10000)) + '만원';
 };
 
-const gc = (g: string) => ({ S: PURPLE, A: BRAND, B: GREEN, C: ORANGE, D: RED }[g] || '#888');
-const rc = (l: string) => ({ high: { b: RED, bg: '#FFF5F5' }, medium: { b: ORANGE, bg: '#FFFBF0' }, low: { b: GREEN, bg: '#F0FFF4' } }[l] || { b: '#888', bg: '#F5F5F5' });
-const rl = (l: string) => ({ high: '높음', medium: '보통', low: '낮음' }[l] || l);
-
 // ─── Component ───
 export const EstimatePDFDocument: React.FC<EstimatePDFProps> = ({
-    customerName, totalCostRange, locationData, costBreakdown, checklist, projectName, aiReport, checklistTitles,
+    customerName, totalCostRange, locationData, costBreakdown, checklist, aiReport, simpleScore, marketGrade
 }) => {
-    const ai = aiReport;
-    const hasAI = !!ai;
-    const tp = hasAI ? 5 : 3;
 
-    // AI가 있으면 주요 타겟을 AI 분석 데이터로 교체
-    const locationAnalysis = locationData.analysis.map(item => {
-        if (item.label === '주요 타겟' && hasAI) {
-            return { ...item, value: cut(ai.locationAnalysis.targetCustomer, 80) };
-        }
-        return item;
-    });
+    // 안전장치: 분석 데이터가 부족할 경우를 대비해 3개만 잘라서 배치
+    const analysisItems = locationData.analysis.slice(0, 3);
+
+    // 점수 및 등급 렌더링 값 연산
+    const renderingScore = aiReport?.summary?.overallScore || simpleScore || 0;
+    const renderingGrade = aiReport?.locationAnalysis?.grade || marketGrade || '-';
 
     return (
-    <Document>
-        {/* ══════════════════════════════════════════════════════
-            PAGE 1: 개요 — 견적 요약 + 비용 상세
-           ══════════════════════════════════════════════════════ */}
-        <Page size="A4" style={s.page}>
-            <Text style={s.h1}>OPENING</Text>
-            <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#000', marginBottom: 3, fontFamily: F }}>견적 보고서</Text>
-            <Text style={{ fontSize: 8, color: '#999', marginBottom: 2, fontFamily: F }}>
-                {customerName} | {new Date().toLocaleDateString('ko-KR')}
-            </Text>
-            {hasAI && <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#333', marginBottom: 6, fontFamily: F }}>{ai.summary.title}</Text>}
-            {!hasAI && <View style={{ marginBottom: 6 }} />}
-
-            {/* 종합 의견 */}
-            {hasAI && ai.summary.overallComment && (
-                <View style={{ padding: 10, backgroundColor: BG, borderRadius: 4, borderLeftWidth: 3, borderLeftColor: BRAND, marginBottom: 10 }}>
-                    <Text style={{ fontSize: 7.5, fontWeight: 'bold', color: BRAND, marginBottom: 3, fontFamily: F }}>종합 의견</Text>
-                    <Text style={{ fontSize: 8.5, color: '#333', lineHeight: 1.6, fontFamily: F }}>{cut(ai.summary.overallComment, 500)}</Text>
-                </View>
-            )}
-
-            {/* 한 줄 요약 (AI 없을 때) */}
-            {!hasAI && (
-                <Text style={{ fontSize: 11, color: '#333', lineHeight: 1.4, marginBottom: 8, fontFamily: F }}>
-                    창업이라는 긴 여정, 오프닝이 가장 든든한 페이스메이커가 되어 드릴게요.
-                </Text>
-            )}
-            <Text style={{ fontSize: 20, fontWeight: 'bold', color: BRAND, marginBottom: 2, fontFamily: F }}>
-                {fmt(totalCostRange.min)} ~ {fmt(totalCostRange.max)}
-            </Text>
-            <Text style={{ fontSize: 7, color: '#999', marginBottom: 10, fontFamily: F }}>예상 총 창업 비용</Text>
-
-            {/* 점수 + 등급 */}
-            {hasAI && (
-                <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
-                    <View style={{ flex: 1, padding: 7, backgroundColor: BG, borderRadius: 4 }}>
-                        <Text style={{ fontSize: 6.5, color: '#888', marginBottom: 1, fontFamily: F }}>준비 점수</Text>
-                        <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
-                            <Text style={{ fontSize: 22, fontWeight: 'bold', color: BRAND, marginRight: 3, fontFamily: F }}>{ai.summary.overallScore}</Text>
-                            <Text style={{ fontSize: 8, color: '#666', fontFamily: F }}>/ 100 ({ai.summary.scoreLabel})</Text>
-                        </View>
-                    </View>
-                    <View style={{ flex: 1, padding: 7, backgroundColor: BG, borderRadius: 4 }}>
-                        <Text style={{ fontSize: 6.5, color: '#888', marginBottom: 1, fontFamily: F }}>상권 등급</Text>
-                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                            <View style={{ width: 24, height: 24, borderRadius: 4, backgroundColor: gc(ai.locationAnalysis.grade), justifyContent: 'center', alignItems: 'center', marginRight: 6 }}>
-                                <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#FFF', fontFamily: F }}>{ai.locationAnalysis.grade}</Text>
-                            </View>
-                            <Text style={{ fontSize: 7, color: '#666', flex: 1, fontFamily: F }}>{cut(ai.locationAnalysis.gradeReason, 120)}</Text>
-                        </View>
-                    </View>
-                </View>
-            )}
-
-            {/* 핵심 포인트 */}
-            {hasAI && (
-                <View style={{ marginBottom: 8 }}>
-                    <Text style={{ fontSize: 7.5, fontWeight: 'bold', color: '#888', marginBottom: 3, fontFamily: F }}>핵심 포인트</Text>
-                    {ai.summary.keyHighlights.slice(0, 4).map((h, i) => (
-                        <View key={i} style={s.bRow}><Text style={s.bDot}>-</Text><Text style={s.b9}>{cut(h, 100)}</Text></View>
-                    ))}
-                </View>
-            )}
-
-            {/* 입지 정보 */}
-            <Text style={s.h3d}>입지 정보</Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 2 }}>
-                <View style={{ width: '30%' }}><Text style={s.lbl}>지역</Text><Text style={s.bold}>{locationData.region}</Text></View>
-                {locationAnalysis.map((a, i) => (
-                    <View key={i} style={{ width: '30%' }}><Text style={s.lbl}>{a.label}</Text><Text style={s.bold}>{a.value}</Text></View>
-                ))}
-            </View>
-
-            {/* 비용 상세 테이블 */}
-            <Text style={[s.h3d, { marginTop: 8 }]}>항목별 비용</Text>
-            {costBreakdown.slice(0, 8).map((item, i) => (
-                <View key={i} style={s.tRow}>
-                    <Text style={s.tL}>{item.label}</Text>
-                    <Text style={s.tV}>{fmt(item.min)} ~ {fmt(item.max)}</Text>
-                </View>
-            ))}
-            {costBreakdown.length > 8 && (
-                <Text style={{ fontSize: 7, color: '#999', marginTop: 2, fontFamily: F }}>외 {costBreakdown.length - 8}개 항목</Text>
-            )}
-            <View style={[s.tRow, { borderBottomWidth: 1.5, borderBottomColor: '#000', marginTop: 2 }]}>
-                <Text style={[s.tL, { fontWeight: 'bold' }]}>합계</Text>
-                <Text style={[s.tV, { color: BRAND, fontSize: 10 }]}>{fmt(totalCostRange.min)} ~ {fmt(totalCostRange.max)}</Text>
-            </View>
-
-            <View style={s.ft}><Text style={s.ftT}>OPENING</Text><Text style={s.ftT}>1 / {tp}</Text></View>
-        </Page>
-
-        {/* ══════════════════════════════════════════════════════
-            PAGE 2: 상권 분석
-           ══════════════════════════════════════════════════════ */}
-        {hasAI ? (
+        <Document>
+            {/* =========================================================
+            PAGE 1: Estimate & Location
+        ========================================================= */}
             <Page size="A4" style={s.page}>
-                <Text style={s.h2}>상권 분석</Text>
-                <Text style={s.sub}>AI가 분석한 입지 리포트</Text>
-
-                {/* 등급 + 판단 근거 */}
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-                    <View style={{ width: 36, height: 36, borderRadius: 6, backgroundColor: gc(ai.locationAnalysis.grade), justifyContent: 'center', alignItems: 'center', marginRight: 8 }}>
-                        <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#FFF', fontFamily: F }}>{ai.locationAnalysis.grade}</Text>
-                    </View>
-                    <View style={{ flex: 1 }}>
-                        <Text style={s.bold}>상권 등급: {ai.locationAnalysis.grade}등급</Text>
-                        <Text style={s.s8}>{cut(ai.locationAnalysis.gradeReason, 300)}</Text>
-                    </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 30 }}>
+                    <Image src="/logo.png" style={{ width: 24, height: 24, marginRight: 6 }} />
+                    <Text style={{ fontSize: 20, fontWeight: 'bold', color: BRAND, letterSpacing: -0.5 }}>Opening</Text>
                 </View>
 
-                {/* 타겟 + 피크 */}
-                <View style={{ flexDirection: 'row', gap: 6, marginBottom: 8 }}>
-                    <View style={[s.card, { flex: 1 }]}>
-                        <Text style={s.lbl}>주요 타겟 고객</Text>
-                        <Text style={s.b9}>{cut(ai.locationAnalysis.targetCustomer, 150)}</Text>
-                    </View>
-                    <View style={[s.card, { flex: 1 }]}>
-                        <Text style={s.lbl}>피크 시간대</Text>
-                        <Text style={s.b9}>{cut(ai.locationAnalysis.peakHours, 120)}</Text>
-                    </View>
-                </View>
+                <Text style={s.h1}>견적 보고서</Text>
+                <Text style={s.preparedText}>예비 창업자: {customerName} | {new Date().toLocaleDateString('ko-KR')}</Text>
 
-                {/* 강점 + 약점 */}
-                <View style={{ flexDirection: 'row', gap: 6, marginBottom: 8 }}>
-                    <View style={{ flex: 1 }}>
-                        <Text style={{ fontSize: 8, fontWeight: 'bold', color: GREEN, marginBottom: 3, fontFamily: F }}>강점</Text>
-                        {ai.locationAnalysis.strengths.slice(0, 3).map((x, i) => (
-                            <View key={i} style={s.bRow}>
-                                <Text style={{ fontSize: 7.5, color: GREEN, marginRight: 3, width: 6, fontFamily: F }}>+</Text>
-                                <Text style={s.b9}>{cut(x, 120)}</Text>
-                            </View>
-                        ))}
+                <Text style={s.heroTitle}>창업이라는 긴 여정, 오프닝이 가장 든든한{'\n'}페이스메이커가 되어 드릴게요.</Text>
+
+                <Text style={s.costLabel}>예상 총 창업 비용</Text>
+                <Text style={s.costRange}>{fmtRange(totalCostRange.min, totalCostRange.max)}</Text>
+
+                <Text style={s.sectionHeader}>입지 분석 데이터</Text>
+
+                <View style={s.gridRow}>
+                    <View style={s.gridCol}>
+                        <Text style={s.gridLabel}>지역</Text>
+                        <Text style={s.gridValue}>{locationData.region}</Text>
                     </View>
-                    <View style={{ flex: 1 }}>
-                        <Text style={{ fontSize: 8, fontWeight: 'bold', color: ORANGE, marginBottom: 3, fontFamily: F }}>약점</Text>
-                        {ai.locationAnalysis.weaknesses.slice(0, 2).map((x, i) => (
-                            <View key={i} style={s.bRow}>
-                                <Text style={{ fontSize: 7.5, color: ORANGE, marginRight: 3, width: 6, fontFamily: F }}>-</Text>
-                                <Text style={s.b9}>{cut(x, 120)}</Text>
-                            </View>
-                        ))}
-                    </View>
-                </View>
-
-                {/* 주변 상권 팁 */}
-                <View style={s.cardB}>
-                    <Text style={{ fontSize: 7.5, fontWeight: 'bold', color: BRAND, marginBottom: 2, fontFamily: F }}>주변 상권 활용 팁</Text>
-                    <Text style={s.b9}>{cut(ai.locationAnalysis.nearbyTip, 250)}</Text>
-                </View>
-
-                {/* AI 비용 분석 */}
-                <Text style={[s.h3, { marginTop: 6 }]}>비용 분석</Text>
-                <Text style={[s.b9, { marginBottom: 6 }]}>{cut(ai.costAnalysis.totalComment, 300)}</Text>
-
-                <Text style={{ fontSize: 8, fontWeight: 'bold', color: GREEN, marginBottom: 3, fontFamily: F }}>비용 절감 포인트</Text>
-                {ai.costAnalysis.savingTips.slice(0, 3).map((tip, i) => (
-                    <View key={i} style={{ flexDirection: 'row', marginBottom: 4, padding: 5, backgroundColor: '#F9FAFB', borderRadius: 3, borderLeftWidth: 2, borderLeftColor: GREEN }}>
-                        <View style={{ width: 48, marginRight: 6 }}>
-                            <Text style={s.bold}>{tip.area}</Text>
-                            <Text style={{ fontSize: 7, color: BRAND, fontWeight: 'bold', fontFamily: F }}>{tip.savedAmount}</Text>
+                    {analysisItems[0] && (
+                        <View style={s.gridCol}>
+                            <Text style={s.gridLabel}>{analysisItems[0].label}</Text>
+                            <Text style={s.gridValue}>{analysisItems[0].value}</Text>
                         </View>
-                        <Text style={[s.s8, { flex: 1 }]}>{cut(tip.tip, 200)}</Text>
-                    </View>
-                ))}
+                    )}
+                    {analysisItems[1] && (
+                        <View style={s.gridCol}>
+                            <Text style={s.gridLabel}>{analysisItems[1].label}</Text>
+                            <Text style={s.gridValue}>{analysisItems[1].value}</Text>
+                        </View>
+                    )}
+                </View>
 
-                <Text style={{ fontSize: 8, fontWeight: 'bold', color: RED, marginTop: 4, marginBottom: 2, fontFamily: F }}>절대 아끼면 안 되는 항목</Text>
-                {ai.costAnalysis.budgetPriority.slice(0, 3).map((p, i) => (
-                    <View key={i} style={s.bRow}>
-                        <Text style={{ fontSize: 8, color: RED, marginRight: 3, width: 6, fontWeight: 'bold', fontFamily: F }}>!</Text>
-                        <Text style={s.b9}>{cut(p, 120)}</Text>
+                {(analysisItems.length > 2) && (
+                    <View style={s.gridRow}>
+                        <View style={s.gridCol}>
+                            <Text style={s.gridLabel}>{analysisItems[2].label}</Text>
+                            <Text style={s.gridValue}>{analysisItems[2].value}</Text>
+                        </View>
+                        <View style={s.gridCol} />
+                        <View style={s.gridCol} />
                     </View>
-                ))}
+                )}
 
-                <View style={s.ft}><Text style={s.ftT}>OPENING AI ANALYSIS</Text><Text style={s.ftT}>2 / {tp}</Text></View>
+                <View style={s.footerView}>
+                    <Text style={s.footerText}>OPENING STARTUP SOLUTION</Text>
+                    <Text style={s.footerText}>Page 1 / 3</Text>
+                </View>
             </Page>
-        ) : (
-            /* Non-AI Page 2: 비용 상세 + 체크리스트 */
+
+            {/* =========================================================
+            PAGE 2: Details (Cost Breakdown)
+        ========================================================= */}
             <Page size="A4" style={s.page}>
-                <Text style={s.h2}>비용 상세</Text>
-                <Text style={s.sub}>항목별 예상 비용</Text>
-                <Text style={s.h3d}>준비 현황</Text>
-                <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
-                    <View style={[s.card, { flex: 1, borderLeftWidth: 2, borderLeftColor: GREEN }]}>
-                        <Text style={{ fontSize: 7, color: '#888', fontFamily: F }}>준비 완료</Text>
-                        <Text style={{ fontSize: 16, fontWeight: 'bold', color: GREEN, fontFamily: F }}>{checklist.readyCount}개</Text>
-                    </View>
-                    <View style={[s.card, { flex: 1, borderLeftWidth: 2, borderLeftColor: ORANGE }]}>
-                        <Text style={{ fontSize: 7, color: '#888', fontFamily: F }}>도움 필요</Text>
-                        <Text style={{ fontSize: 16, fontWeight: 'bold', color: ORANGE, fontFamily: F }}>{checklist.worryCount}개</Text>
-                    </View>
-                </View>
-                <View style={s.ft}><Text style={s.ftT}>OPENING</Text><Text style={s.ftT}>2 / {tp}</Text></View>
-            </Page>
-        )}
+                <View style={{ height: 40 }} />
+                <Text style={s.h2}>상세 내역</Text>
 
-        {/* ══════════════════════════════════════════════════════
-            PAGE 3: 리스크 분석 + 실행 로드맵
-           ══════════════════════════════════════════════════════ */}
-        {hasAI ? (
-            <Page size="A4" style={s.page}>
-                <Text style={s.h2}>리스크 분석</Text>
-                <Text style={s.sub}>주의 요인 및 실행 로드맵</Text>
+                <Text style={s.sectionHeader}>항목별 비용 상세</Text>
 
-                {/* 리스크 카드 */}
-                <Text style={s.h3}>주요 리스크 요인</Text>
-                {ai.riskFactors.slice(0, 3).map((risk, i) => {
-                    const c = rc(risk.level);
-                    return (
-                        <View key={i} style={{ padding: 7, marginBottom: 5, borderRadius: 3, borderLeftWidth: 2, borderLeftColor: c.b, backgroundColor: c.bg }}>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
-                                <Text style={{ fontSize: 7, color: c.b, fontWeight: 'bold', marginRight: 3, fontFamily: F }}>[{rl(risk.level)}]</Text>
-                                <Text style={s.bold}>{risk.title}</Text>
-                            </View>
-                            <Text style={[s.s8, { marginBottom: 2 }]}>{cut(risk.description, 250)}</Text>
-                            <View style={{ flexDirection: 'row' }}>
-                                <Text style={{ fontSize: 7.5, color: BRAND, fontWeight: 'bold', marginRight: 2, fontFamily: F }}>대응:</Text>
-                                <Text style={[s.s8, { flex: 1 }]}>{cut(risk.mitigation, 250)}</Text>
-                            </View>
-                        </View>
-                    );
-                })}
-
-                {/* 실행 로드맵 */}
-                <Text style={[s.h3, { marginTop: 8 }]}>실행 로드맵</Text>
-                <Text style={{ fontSize: 8, color: BRAND, fontWeight: 'bold', marginBottom: 6, fontFamily: F }}>
-                    총 예상 기간: {ai.actionPlan.totalDuration}
-                </Text>
-
-                {ai.actionPlan.phases.slice(0, 4).map((phase, i) => (
-                    <View key={i} style={{ flexDirection: 'row', marginBottom: 5, paddingBottom: 4, borderBottomWidth: 0.5, borderBottomColor: '#F0F0F0' }}>
-                        <View style={{ width: 48, marginRight: 6 }}>
-                            <Text style={{ fontSize: 8, fontWeight: 'bold', color: BRAND, fontFamily: F }}>{phase.phase.split(':')[0] || phase.phase}</Text>
-                            <Text style={{ fontSize: 7, color: '#888', fontFamily: F }}>{phase.duration}</Text>
-                        </View>
-                        <View style={{ flex: 1 }}>
-                            {phase.phase.includes(':') && (
-                                <Text style={[s.bold, { marginBottom: 1 }]}>{phase.phase.split(':').slice(1).join(':').trim()}</Text>
-                            )}
-                            {phase.tasks.slice(0, 4).map((task, j) => (
-                                <View key={j} style={s.bRow}><Text style={s.bDot}>-</Text><Text style={s.s8}>{cut(task, 100)}</Text></View>
-                            ))}
-                        </View>
+                {costBreakdown.map((item, i) => (
+                    <View key={i} style={s.tRow}>
+                        <Text style={s.tLabel}>{item.label}</Text>
+                        <Text style={s.tValue}>{fmtRange(item.min, item.max)}</Text>
                     </View>
                 ))}
 
-                <View style={s.ft}><Text style={s.ftT}>OPENING AI ANALYSIS</Text><Text style={s.ftT}>3 / {tp}</Text></View>
-            </Page>
-        ) : (
-            /* Non-AI Page 3: 체크리스트 + CTA */
-            <Page size="A4" style={s.page}>
-                <Text style={s.h2}>체크리스트</Text>
-                <Text style={s.sub}>창업 준비 현황</Text>
-                <Text style={s.h3d}>준비 현황</Text>
-                <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
-                    <View style={{ flex: 1 }}>
-                        <Text style={{ fontSize: 9, fontWeight: 'bold', color: ORANGE, marginBottom: 4, fontFamily: F }}>도움 필요 ({checklist.worryCount})</Text>
-                        {checklist.worryItems.map((x, i) => (
-                            <View key={i} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-                                <View style={[s.dot, { backgroundColor: ORANGE }]} /><Text style={{ fontSize: 9, color: '#444', fontFamily: F }}>{x}</Text>
-                            </View>
-                        ))}
-                        {checklist.worryCount === 0 && <Text style={{ fontSize: 9, color: '#999', fontFamily: F }}>- 없음 -</Text>}
-                    </View>
-                    <View style={{ flex: 1 }}>
-                        <Text style={{ fontSize: 9, fontWeight: 'bold', color: GREEN, marginBottom: 4, fontFamily: F }}>준비 완료 ({checklist.readyCount})</Text>
-                        {checklist.readyItems.map((x, i) => (
-                            <View key={i} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-                                <View style={[s.dot, { backgroundColor: GREEN }]} /><Text style={{ fontSize: 9, color: '#444', fontFamily: F }}>{x}</Text>
-                            </View>
-                        ))}
-                        {checklist.readyCount === 0 && <Text style={{ fontSize: 9, color: '#999', fontFamily: F }}>- 없음 -</Text>}
+                <View style={s.totalRow}>
+                    <Text style={s.totalLabel}>합계</Text>
+                    <View style={s.totalValueBox}>
+                        <Text style={s.totalValuePrimary}>{fmtPrice(totalCostRange.min)} ~ {fmtPrice(totalCostRange.max).split(' ')[0]}</Text>
+                        <Text style={s.totalValueSecondary}>{fmtPrice(totalCostRange.max).split(' ').slice(1).join(' ')}</Text>
                     </View>
                 </View>
-                <View style={[s.cta, { marginTop: 20 }]}>
-                    <Text style={{ fontSize: 10, fontWeight: 'bold', color: BRAND, marginBottom: 3, fontFamily: F }}>
-                        {checklist.worryCount > 0 ? '맞춤형 솔루션 제안' : '성공적인 오픈을 위한 최종 점검'}
-                    </Text>
-                    <Text style={{ fontSize: 8.5, color: '#333', lineHeight: 1.4, fontFamily: F }}>
+
+                <View style={s.footerView}>
+                    <Text style={s.footerText}>OPENING STARTUP SOLUTION</Text>
+                    <Text style={s.footerText}>Page 2 / 3</Text>
+                </View>
+            </Page>
+
+            {/* =========================================================
+            PAGE 3: Checklist
+        ========================================================= */}
+            <Page size="A4" style={s.page}>
+                <View style={{ height: 40 }} />
+                <Text style={s.h2}>준비 항목 검토</Text>
+
+                {/* Score / Grade Section */}
+                <View style={s.scoreBoxRow}>
+                    <View style={s.scoreBox}>
+                        <Text style={s.scoreLabel}>준비 점수 (AI 종합 분석)</Text>
+                        <Text style={s.scoreValue}>{renderingScore}점</Text>
+                    </View>
+                    <View style={s.scoreBox}>
+                        <Text style={s.scoreLabel}>상권 등급</Text>
+                        <Text style={s.scoreValue}>{renderingGrade}등급</Text>
+                    </View>
+                </View>
+
+                <Text style={s.sectionHeader}>준비 현황</Text>
+
+                <View style={s.checklistContainer}>
+                    {/* 왼쪽: Required Attention (도움 필요) */}
+                    <View style={s.checklistCol}>
+                        <Text style={s.checkColumnHeaderWorry}>도움 필요 ({checklist.worryCount})</Text>
+                        {checklist.worryItems.map((item, i) => (
+                            <View key={i} style={s.checkItem}>
+                                <View style={s.checkDotWorry} />
+                                <Text style={s.checkText}>{item}</Text>
+                            </View>
+                        ))}
+                        {checklist.worryCount === 0 && (
+                            <Text style={[s.checkText, { color: TEXT_MUTED }]}>없음</Text>
+                        )}
+                    </View>
+
+                    {/* 오른쪽: Ready (준비 완료) */}
+                    <View style={s.checklistCol}>
+                        <Text style={s.checkColumnHeaderReady}>준비 완료 ({checklist.readyCount})</Text>
+                        {checklist.readyItems.map((item, i) => (
+                            <View key={i} style={s.checkItem}>
+                                <View style={s.checkDotReady} />
+                                <Text style={s.checkText}>{item}</Text>
+                            </View>
+                        ))}
+                        {checklist.readyCount === 0 && (
+                            <Text style={[s.checkText, { color: TEXT_MUTED }]}>없음</Text>
+                        )}
+                    </View>
+                </View>
+
+                {/* CTA Panel */}
+                <View style={s.ctaPanel}>
+                    <Text style={s.ctaTitle}>맞춤형 솔루션 제안 (Cost Saving Plan)</Text>
+                    <Text style={s.ctaDesc}>
                         {checklist.worryCount > 0
-                            ? `${checklist.worryCount}개의 '도움 필요' 항목에 대해 오프닝 전담 매니저가 해결책과 비용 절감 방안을 준비했습니다.`
-                            : '대부분의 준비가 완료되셨군요! 전담 매니저가 더블 체크를 도와드리겠습니다.'}
-                    </Text>
-                </View>
-                <View style={s.ft}><Text style={s.ftT}>OPENING</Text><Text style={s.ftT}>3 / {tp}</Text></View>
-            </Page>
-        )}
-
-        {/* ══════════════════════════════════════════════════════
-            PAGE 4 (AI): 체크리스트 검토
-           ══════════════════════════════════════════════════════ */}
-        {hasAI && (
-            <Page size="A4" style={s.page}>
-                <Text style={s.h2}>체크리스트 검토</Text>
-                <Text style={s.sub}>항목별 AI 맞춤 컨설팅</Text>
-
-                {/* 준비 현황 요약 */}
-                <View style={{ flexDirection: 'row', gap: 6, marginBottom: 8 }}>
-                    <View style={[s.card, { flex: 1, flexDirection: 'row', alignItems: 'center', borderLeftWidth: 2, borderLeftColor: GREEN }]}>
-                        <Text style={{ fontSize: 14, fontWeight: 'bold', color: GREEN, marginRight: 4, fontFamily: F }}>{checklist.readyCount}</Text>
-                        <Text style={{ fontSize: 8, color: '#666', fontFamily: F }}>준비 완료</Text>
-                    </View>
-                    <View style={[s.card, { flex: 1, flexDirection: 'row', alignItems: 'center', borderLeftWidth: 2, borderLeftColor: ORANGE }]}>
-                        <Text style={{ fontSize: 14, fontWeight: 'bold', color: ORANGE, marginRight: 4, fontFamily: F }}>{checklist.worryCount}</Text>
-                        <Text style={{ fontSize: 8, color: '#666', fontFamily: F }}>도움 필요</Text>
-                    </View>
-                </View>
-
-                {/* AI 조언 목록 */}
-                <Text style={s.h3}>항목별 AI 조언</Text>
-                {ai.checklistAdvice.slice(0, 10).map((item, i) => {
-                    const done = item.status === 'done';
-                    const color = done ? GREEN : ORANGE;
-                    const title = checklistTitles?.[item.itemId] || item.itemId;
-
-                    return (
-                        <View key={i} style={{ marginBottom: 4, paddingBottom: 3, borderBottomWidth: 0.5, borderBottomColor: '#F0F0F0' }}>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 1 }}>
-                                <View style={[s.dot, { backgroundColor: color }]} />
-                                <Text style={s.bold}>{title}</Text>
-                                <Text style={{ fontSize: 6.5, color, marginLeft: 3, fontFamily: F }}>({done ? '완료' : '도움필요'})</Text>
-                            </View>
-                            <Text style={[s.s8, { marginLeft: 10 }]}>{cut(item.advice, 250)}</Text>
-
-                            {!done && item.actionSteps && item.actionSteps.length > 0 && (
-                                <View style={{ marginLeft: 10, marginTop: 1 }}>
-                                    {item.actionSteps.slice(0, 2).map((step, j) => (
-                                        <View key={j} style={{ flexDirection: 'row', marginBottom: 1 }}>
-                                            <Text style={{ fontSize: 7, color: BRAND, marginRight: 2, width: 8, fontFamily: F }}>{j + 1}.</Text>
-                                            <Text style={s.s8}>{cut(step, 150)}</Text>
-                                        </View>
-                                    ))}
-                                </View>
-                            )}
-                            {!done && (item.costTip || item.timeline) && (
-                                <View style={{ flexDirection: 'row', marginLeft: 10, marginTop: 1, gap: 8 }}>
-                                    {item.costTip && <Text style={{ fontSize: 7, color: BRAND, fontFamily: F }}>비용: {cut(item.costTip, 120)}</Text>}
-                                    {item.timeline && <Text style={{ fontSize: 7, color: '#888', fontFamily: F }}>기간: {item.timeline}</Text>}
-                                </View>
-                            )}
-                        </View>
-                    );
-                })}
-
-                <View style={s.ft}><Text style={s.ftT}>OPENING AI ANALYSIS</Text><Text style={s.ftT}>4 / {tp}</Text></View>
-            </Page>
-        )}
-
-        {/* ══════════════════════════════════════════════════════
-            PAGE 5 (AI): 오프닝 Tip
-           ══════════════════════════════════════════════════════ */}
-        {hasAI && (
-            <Page size="A4" style={s.page}>
-                <Text style={s.h2}>오프닝 Tip</Text>
-                <Text style={s.sub}>AI가 전하는 창업 성공 꿀팁</Text>
-
-                {/* Opening Tip */}
-                <View style={[s.cardB, { padding: 14, marginBottom: 12 }]}>
-                    <Text style={{ fontSize: 10, color: '#333', lineHeight: 1.7, fontFamily: F }}>
-                        "{cut(ai.openingTip, 500)}"
+                            ? `${checklist.worryCount}개의 '도움 필요' 항목에 대해 오프닝 전담 매니저가 구체적인 해결책과 비용 절감 방안을 준비했습니다.\n내일 오전 중으로 연락드리겠습니다.`
+                            : `대부분의 준비가 완료되셨군요! 성공적인 오픈을 위해 전담 매니저가 마지막 점검을 도와드리겠습니다.\n내일 오전 중으로 연락드리겠습니다.`}
                     </Text>
                 </View>
 
-                {/* 최종 요약 */}
-                <Text style={s.h3}>분석 요약</Text>
-                <View style={{ flexDirection: 'row', gap: 6, marginBottom: 10 }}>
-                    <View style={[s.card, { flex: 1, alignItems: 'center', paddingVertical: 10 }]}>
-                        <Text style={{ fontSize: 6.5, color: '#888', marginBottom: 1, fontFamily: F }}>준비 점수</Text>
-                        <Text style={{ fontSize: 20, fontWeight: 'bold', color: BRAND, fontFamily: F }}>{ai.summary.overallScore}</Text>
-                        <Text style={{ fontSize: 7, color: '#888', fontFamily: F }}>{ai.summary.scoreLabel}</Text>
-                    </View>
-                    <View style={[s.card, { flex: 1, alignItems: 'center', paddingVertical: 10 }]}>
-                        <Text style={{ fontSize: 6.5, color: '#888', marginBottom: 1, fontFamily: F }}>상권 등급</Text>
-                        <Text style={{ fontSize: 20, fontWeight: 'bold', color: gc(ai.locationAnalysis.grade), fontFamily: F }}>{ai.locationAnalysis.grade}</Text>
-                        <Text style={{ fontSize: 7, color: '#888', fontFamily: F }}>{ai.locationAnalysis.grade}등급</Text>
-                    </View>
-                    <View style={[s.card, { flex: 1, alignItems: 'center', paddingVertical: 10 }]}>
-                        <Text style={{ fontSize: 6.5, color: '#888', marginBottom: 1, fontFamily: F }}>예상 기간</Text>
-                        <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#333', marginTop: 3, fontFamily: F }}>{ai.actionPlan.totalDuration}</Text>
-                    </View>
+                <View style={s.footerView}>
+                    <Text style={s.footerText}>OPENING STARTUP SOLUTION</Text>
+                    <Text style={s.footerText}>Page 3 / 3</Text>
                 </View>
-
-                {/* 핵심 포인트 다시 */}
-                <Text style={s.h3}>핵심 포인트</Text>
-                {ai.summary.keyHighlights.slice(0, 4).map((h, i) => (
-                    <View key={i} style={s.bRow}><Text style={s.bDot}>-</Text><Text style={s.b9}>{cut(h, 100)}</Text></View>
-                ))}
-
-                {/* CTA */}
-                <View style={[s.cta, { marginTop: 10 }]}>
-                    <Text style={{ fontSize: 9, fontWeight: 'bold', color: BRAND, marginBottom: 2, fontFamily: F }}>오프닝과 함께 시작하세요</Text>
-                    <Text style={{ fontSize: 8, color: '#333', lineHeight: 1.4, fontFamily: F }}>
-                        이 보고서는 Opening AI가 생성한 참고 자료입니다. 전담 매니저와 상담하시면 더욱 정밀한 맞춤 솔루션을 받으실 수 있습니다.
-                        {checklist.worryCount > 0 && ` ${checklist.worryCount}개의 '도움 필요' 항목에 대한 해결 방안을 준비해 드리겠습니다.`}
-                    </Text>
-                </View>
-
-                <View style={s.ft}><Text style={s.ftT}>OPENING AI ANALYSIS</Text><Text style={s.ftT}>5 / {tp}</Text></View>
             </Page>
-        )}
-    </Document>
+        </Document>
     );
 };
+
