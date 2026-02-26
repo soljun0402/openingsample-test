@@ -16,7 +16,7 @@ import { EstimateResultView } from './components/EstimateResultView';
 
 function App() {
   // --- 강제 우회 코드: 로그인/결제 없이 PDF 결과 바로 확인 ---
-  const MOCK_BYPASS = true;
+  const MOCK_BYPASS = false;
   if (MOCK_BYPASS) {
     const mockEstimateData = {
       customerName: '예비 창업자',
